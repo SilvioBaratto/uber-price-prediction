@@ -16,6 +16,10 @@ Thumbs.db
 # scratch / research artifacts (not part of the deliverable)
 .scratch/
 
+# planning artifacts (kept locally, not part of the tracked deliverable)
+SPEC.md
+tasks/
+
 # large generated ride log (SPEC Rev 2: full Madrid scale ~15k drivers => millions of
 # rows, hundreds of MB). Regenerable from the seed via `python -m uber.generate_data`,
 # so it is NOT committed. The small tables (locations, tiers, drivers) stay tracked.
