@@ -129,10 +129,16 @@ Tasks 3.1–3.3 are reused; `sample_timestamps` is retired for the simulation's 
         ∈[3,5], avg_vtat∈[2,20], driver_rating∈[3.5,5.0]; 0 nulls; pinned OLS R²=0.8510 (unchanged,
         in band). driver_rating verified constant per driver + matches roster.
       - Verified: `tests/test_distractors.py` 12/12; `pytest` 99/99 (was 87); compileall+imports OK.
-- [ ] 4.2 `commission_eur = 0.25×price_eur + noise` (excluded from signal formula).
-      - AC: including it ⇒ R²≈1 (>0.999); excluding ⇒ R² in band.
-      - Verify: `pytest -k leakage` green.
-- [ ] ⛳ **CHECKPOINT 3** — distractors inert, leakage trap fires.
+- [x] 4.2 DONE — `config.COMMISSION_RATE=0.25` + `COMMISSION_NOISE_STD=0.02`; `generate_data`
+      adds `LEAKAGE_COLUMNS=["commission_eur"]`, extends `RIDE_COLUMNS` (signal+distractors+
+      leakage); `build_rides_df` derives `commission_eur = 0.25×price_eur + N(0,0.02)` right
+      after `price_eur` (its rng draw comes last, so signal + distractor cols stay byte-identical).
+      Updated the two schema pins (test_rides `RIDE_COLUMNS`, test_distractors → position-based).
+      - AC met: leakage R²=0.999991 (>0.999); signal R²=0.8510 unchanged (in band); commission =
+        0.25×price + noise (residual std 0.0200, min commission 1.16 > 0, 0 nulls); excluded from
+        SIGNAL_COLUMNS + DISTRACTOR_COLUMNS.
+      - Verified: `tests/test_leakage.py` 4/4; `pytest` 103/103 (was 99); compileall+imports OK.
+- [x] ⛳ **CHECKPOINT 3** — distractors inert, leakage trap fires. Reached: `pytest` 103/103 green.
 
 ## Phase 5 — full validation & docs
 - [ ] 5.1 Consolidate all 9 SPEC §5 assertions + byte-identical reproducibility test;

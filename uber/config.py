@@ -102,6 +102,15 @@ NOISE_STD = 3.75
 # Target OLS R² band on the pinned signal feature set (SPEC §5.6, Task 3.4).
 R2_BAND = (0.83, 0.87)
 
+# --- Data-leakage trap (SPEC §2.3 / §5.8, Task 4.2) ------------------------
+# commission_eur = COMMISSION_RATE × price_eur + negligible Gaussian noise (Uber's cut). It is
+# derived from the target, so it is EXCLUDED from the price formula and the pinned OLS feature
+# set; feeding it in as an X feature pushes in-sample R² ≈ 1 — the concrete leakage example that
+# Part 8 must spot and drop. The noise is tiny (cents) so the column is near-perfectly collinear
+# with the target but not byte-identical to a rescaled copy.
+COMMISSION_RATE = 0.25
+COMMISSION_NOISE_STD = 0.02
+
 # --- Driver population & day-by-day simulation (SPEC §2.6, Rev 2) -----------
 # Activity classes, right-skewed toward part-time (research: >50% of drivers work 1–5 h/week,
 # ~80% <20 h/week). Per class: expected working days per week, and mean rides on a worked day

@@ -55,12 +55,13 @@ def test_rides_columns_and_order(rides: pd.DataFrame) -> None:
         "surge_multiplier",
         "price_eur",
     ]
-    # signal + target come first, then the weak distractors (SPEC §2.3, Task 4.1)
+    # signal + target, then the weak distractors (Task 4.1), then the leakage column (Task 4.2)
     assert generate_data.RIDE_COLUMNS == generate_data.SIGNAL_COLUMNS + [
         "payment_method",
         "driver_rating",
         "customer_rating",
         "avg_vtat",
+        "commission_eur",
     ]
 
 

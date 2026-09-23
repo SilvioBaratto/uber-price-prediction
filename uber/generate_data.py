@@ -42,9 +42,13 @@ SIGNAL_COLUMNS = [
 # NCR empirical distributions; ``driver_rating`` is per-driver (drivers.csv) joined onto rides.
 DISTRACTOR_COLUMNS = ["payment_method", "driver_rating", "customer_rating", "avg_vtat"]
 
-# Full rides.csv column order: signal + target, then the distractors (``commission_eur`` lands
-# in Task 4.2). The pinned OLS feature set (SPEC §5.6) still draws only from ``SIGNAL_COLUMNS``.
-RIDE_COLUMNS = SIGNAL_COLUMNS + DISTRACTOR_COLUMNS
+# Data-leakage trap (SPEC §2.3, Task 4.2): derived from the target, so it is excluded from the
+# signal set — feeding it in as an X feature pushes R² ≈ 1 (the Part 8 leakage example).
+LEAKAGE_COLUMNS = ["commission_eur"]
+
+# Full rides.csv column order: signal + target, then the weak distractors, then the leakage
+# column. The pinned OLS feature set (SPEC §5.6) still draws only from ``SIGNAL_COLUMNS``.
+RIDE_COLUMNS = SIGNAL_COLUMNS + DISTRACTOR_COLUMNS + LEAKAGE_COLUMNS
 
 
 def _district_members(locations: pd.DataFrame) -> tuple[pd.Index, np.ndarray, np.ndarray, np.ndarray]:
@@ -78,7 +82,8 @@ def build_rides_df(
     weak distractors (SPEC §2.3) are added last: ``payment_method`` / ``customer_rating`` /
     ``avg_vtat`` are sampled from the NCR empirical supports in ``ncr`` (drawn *after* the signal
     draws so the signal columns stay byte-identical), and per-driver ``driver_rating`` is joined
-    on. Rides are finally sorted chronologically and assigned a contiguous ``ride_id``.
+    on. Finally ``commission_eur`` (the leakage trap) is derived from ``price_eur``. Rides are
+    sorted chronologically and assigned a contiguous ``ride_id``.
     """
     lats = locations["lat"].to_numpy()
     lons = locations["lon"].to_numpy()
@@ -122,6 +127,7 @@ def build_rides_df(
     payment_method = sampling.sample_empirical(rng, ncr["payment_method"], n)
     customer_rating = sampling.sample_empirical(rng, ncr["customer_rating"], n)
     avg_vtat = sampling.sample_empirical(rng, ncr["avg_vtat"], n)
+    # Leakage trap: derived from the target (needs price_eur, so drawn after it below).
 
     # --- coordinate lookup (ids are 1-based and sequential) ---
     p_lat, p_lon = lats[pickup - 1], lons[pickup - 1]
@@ -143,6 +149,8 @@ def build_rides_df(
         base_fare, per_km, per_min, booking_fee, min_fare,
         distance_km, duration_min, surge_multiplier, noise,
     )
+    # Leakage column: a near-perfect linear function of the target (Uber's cut) + tiny noise.
+    commission_eur = config.COMMISSION_RATE * price_eur + rng.normal(0.0, config.COMMISSION_NOISE_STD, size=n)
 
     df = pd.DataFrame(
         {
@@ -163,6 +171,7 @@ def build_rides_df(
             "driver_rating": driver_rating,
             "customer_rating": customer_rating,
             "avg_vtat": avg_vtat,
+            "commission_eur": commission_eur,
         }
     )
     # Chronological order, then a contiguous 1-based ride_id (stable sort keeps ties in the

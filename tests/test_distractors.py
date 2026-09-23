@@ -39,12 +39,15 @@ def drivers(dataset: tuple[pd.DataFrame, pd.DataFrame]) -> pd.DataFrame:
 # --- schema ----------------------------------------------------------------
 def test_distractor_columns_present_and_ordered(rides: pd.DataFrame) -> None:
     assert list(rides.columns) == generate_data.RIDE_COLUMNS
-    assert generate_data.RIDE_COLUMNS == generate_data.SIGNAL_COLUMNS + [
+    assert generate_data.DISTRACTOR_COLUMNS == [
         "payment_method",
         "driver_rating",
         "customer_rating",
         "avg_vtat",
     ]
+    # the distractor block sits immediately after the signal + target columns
+    n = len(generate_data.SIGNAL_COLUMNS)
+    assert generate_data.RIDE_COLUMNS[n:n + len(generate_data.DISTRACTOR_COLUMNS)] == generate_data.DISTRACTOR_COLUMNS
 
 
 def test_distractors_have_no_nulls(rides: pd.DataFrame) -> None:
