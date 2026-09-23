@@ -1,0 +1,23 @@
+output/*
+!output/.gitkeep
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+*.egg-info/
+
+# os
+.DS_Store
+Thumbs.db
+
+# scratch / research artifacts (not part of the deliverable)
+.scratch/
+
+# large generated ride log (SPEC Rev 2: full Madrid scale ~15k drivers => millions of
+# rows, hundreds of MB). Regenerable from the seed via `python -m uber.generate_data`,
+# so it is NOT committed. The small tables (locations, tiers, drivers) stay tracked.
+data/raw/rides.csv
+data/raw/rides.csv.gz
