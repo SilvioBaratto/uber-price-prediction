@@ -98,21 +98,29 @@ by hand.
 ## Structure
 
 ```
-data/madrid_locations.csv   the map of Madrid points
-data/ride_tiers.csv         the tier catalog and price parameters
-data/raw/                   raw / generated data, e.g. rides.csv
-data/processed/             cleaned dataset and features
-uber/                       the code: data generation, models, evaluation, simulator
-output/                     numbers and charts for the shorts (out of git)
-run.py                      orchestrator: from raw data to each part's numbers
+data/raw/madrid_locations.csv   the map of Madrid points            (tracked)
+data/raw/ride_tiers.csv         the tier catalog + price parameters  (tracked)
+data/raw/drivers.csv            driver population: tenure, activity, home district (tracked)
+data/raw/rides.csv              the ride history / training data     (gitignored: millions of
+                                rows at full scale, regenerated from the seed)
+data/raw/ncr_ride_bookings.csv  Kaggle NCR source (empirical distractor distributions)
+data/sources/                   frozen upstream sources (Madrid callejero snapshot, barrios TopoJSON)
+data/processed/                 cleaned dataset and features
+uber/                           the code: data generation, models, evaluation, simulator
+output/                         numbers and charts for the shorts (out of git)
+run.py                          orchestrator: from raw data to each part's numbers
 ```
+
+All four generated tables are written to `data/raw/`; the three small tables
+(`madrid_locations.csv`, `ride_tiers.csv`, `drivers.csv`) are committed, while the large
+`rides.csv` is gitignored and regenerated from the seed (`python -m uber.generate_data`).
 
 ## Usage
 
 ```bash
 python -m venv .venv && .venv/Scripts/activate   # Windows
 pip install -e .
-python -m uber.generate_data   # generate the three CSVs
+python -m uber.generate_data   # generate the four CSVs into data/raw/
 python run.py                  # train the models and print RMSE part by part
 python -m uber.simulator       # start the terminal simulator (A → B in Madrid)
 ```

@@ -141,11 +141,27 @@ Tasks 3.1–3.3 are reused; `sample_timestamps` is retired for the simulation's 
 - [x] ⛳ **CHECKPOINT 3** — distractors inert, leakage trap fires. Reached: `pytest` 103/103 green.
 
 ## Phase 5 — full validation & docs
-- [ ] 5.1 Consolidate all 9 SPEC §5 assertions + byte-identical reproducibility test;
-      reconcile README to `data/raw/` layout.
-      - AC: clean `data/raw/` → `python -m uber.generate_data && pytest` all green.
-      - Verify: delete generated CSVs, regenerate, `pytest` → 0 failures.
-- [ ] ⛳ **CHECKPOINT 4 (final)** — full pipeline reproducible end-to-end; ready to commit.
+- [x] 5.1 DONE — `tests/test_generation.py`: the consolidated SPEC §5 validation suite, one
+      `test_s5_<n>_...` per assertion. The spec now lists **12** assertions (Rev 2 added the
+      driver-panel / tenure-churn / year-coverage checks, §5.10–5.12), not the 9 in the original
+      plan — all 12 are covered plus the byte-identical reproducibility test (§5.1: same seed ⇒
+      all 4 CSVs byte-identical). One shared `build_dataset(SEED, 250)` dataset (~107k rides;
+      structural props ~invariant to N) drives the ride assertions; a larger `build_drivers(SEED,
+      3000)` roster backs the stationarity/tenure check. Pinned OLS feature set reused (numeric +
+      one-hot tier + one-hot pickup_district; `driver_id` excluded). Reconciled the README
+      structure block + usage to the `data/raw/` layout (all 4 CSVs there; 3 small tables tracked,
+      `rides.csv` gitignored) — A4.
+      - AC met: clean-room `python -m uber.generate_data --out-dir … --n-drivers 250` writes all 4
+        CSVs; committed `madrid_locations.csv`/`ride_tiers.csv` regenerate byte-identically; `pytest`
+        115/115 (was 103) green.
+      - Verified: `tests/test_generation.py` 12/12; full suite 115/115; generation end-to-end from
+        an empty dir produces the 4 CSVs.
+- [x] ⛳ **CHECKPOINT 4 (final)** — full pipeline reproducible end-to-end; §5 suite (12/12) green
+      from clean; docs reconciled. `pytest` 115/115.
+      - NOTE for the user: the committed `data/raw/` is out of sync with Rev 2 — `drivers.csv` is
+        missing from git and `rides.csv` on disk is the stale pre-Rev-2 50k file (gitignored). Tests
+        don't read `data/raw/`, so this doesn't affect the suite, but regenerating + committing the
+        Rev-2 `drivers.csv` (and refreshing the local `rides.csv`) is a follow-up decision.
 
 ## Open risks (see plan §7)
 - R1 coordinate sourcing (online fetch, license, normalization) · R2 R² band sensitivity ·
