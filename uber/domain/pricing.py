@@ -63,13 +63,13 @@ def _is_weekend_night(hour: int, dow: int) -> bool:
     Sun 03:59. So the small hours of Sat and Sun still count as the previous evening's peak,
     while the small hours of Fri (Thursday-night carryover) do not.
     """
-    late = hour >= 21   # 21, 22, 23
-    early = hour <= 3   # 00, 01, 02, 03
-    if dow == 4 and late:              # Fri evening
+    late = hour >= 21  # 21, 22, 23
+    early = hour <= 3  # 00, 01, 02, 03
+    if dow == 4 and late:  # Fri evening
         return True
-    if dow == 5 and (early or late):   # Sat small hours + Sat evening
+    if dow == 5 and (early or late):  # Sat small hours + Sat evening
         return True
-    if dow == 6 and early:             # Sun small hours
+    if dow == 6 and early:  # Sun small hours
         return True
     return False
 
@@ -78,7 +78,7 @@ def demand_profile(hour: int, dow: int) -> float:
     """Deterministic base surge for a (hour, dow) bucket, before jitter (SPEC §2.5)."""
     if _is_weekend_night(hour, dow):
         return config.SURGE_WEEKEND_NIGHT
-    if dow in (5, 6):                      # remaining Sat/Sun hours = weekend daytime
+    if dow in (5, 6):  # remaining Sat/Sun hours = weekend daytime
         return config.SURGE_WEEKEND_DAY
     # Weekdays (Mon–Fri)
     if hour <= 5:

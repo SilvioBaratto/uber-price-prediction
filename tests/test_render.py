@@ -32,9 +32,9 @@ def test_render_shows_each_tier_row() -> None:
 
 def test_render_formats_price_and_eta_and_seats() -> None:
     text = render_options(OPTIONS)
-    assert "9.40" in text          # two-decimal euros
-    assert "€" in text             # euro sign present
-    assert "13 min" in text        # eta rounded to whole minutes
+    assert "9.40" in text  # two-decimal euros
+    assert "€" in text  # euro sign present
+    assert "13 min" in text  # eta rounded to whole minutes
     # the 6-seat van's capacity shows up
     lines = [ln for ln in text.splitlines() if "Uber Van" in ln]
     assert lines and "6" in lines[0]

@@ -58,7 +58,7 @@ def test_speed_positive_for_every_hour() -> None:
 
 
 def test_speed_rush_slower_than_overnight() -> None:
-    assert pricing.speed_kmh(8) < pricing.speed_kmh(3)   # morning rush
+    assert pricing.speed_kmh(8) < pricing.speed_kmh(3)  # morning rush
     assert pricing.speed_kmh(19) < pricing.speed_kmh(3)  # evening rush
 
 
@@ -81,8 +81,8 @@ def test_weekend_night_is_the_expensive_case() -> None:
 
 def test_weekday_rush_above_offpeak() -> None:
     offpeak = pricing.demand_profile(11, WED)
-    assert pricing.demand_profile(8, WED) > offpeak    # morning rush
-    assert pricing.demand_profile(19, WED) > offpeak   # evening rush
+    assert pricing.demand_profile(8, WED) > offpeak  # morning rush
+    assert pricing.demand_profile(19, WED) > offpeak  # evening rush
 
 
 def test_early_friday_morning_is_not_weekend_night() -> None:
@@ -92,8 +92,8 @@ def test_early_friday_morning_is_not_weekend_night() -> None:
 
 def test_surge_clamped_to_bounds() -> None:
     lo, hi = config.SURGE_CLAMP
-    assert pricing.surge(2, SAT, jitter=10.0) == pytest.approx(hi)     # clamp up
-    assert pricing.surge(11, WED, jitter=0.01) == pytest.approx(lo)    # clamp down
+    assert pricing.surge(2, SAT, jitter=10.0) == pytest.approx(hi)  # clamp up
+    assert pricing.surge(11, WED, jitter=0.01) == pytest.approx(lo)  # clamp down
 
 
 def test_surge_default_jitter_equals_profile() -> None:
@@ -177,7 +177,13 @@ def test_price_array_matches_scalar() -> None:
         np.array([t.per_min for t in tiers]),
         np.array([t.booking_fee for t in tiers]),
         np.array([t.min_fare for t in tiers]),
-        dist, dur, surge, noise,
+        dist,
+        dur,
+        surge,
+        noise,
     )
-    scalar = [pricing.price(t, d, u, s, float(nz)) for t, d, u, s, nz in zip(tiers, dist, dur, surge, noise)]
+    scalar = [
+        pricing.price(t, d, u, s, float(nz))
+        for t, d, u, s, nz in zip(tiers, dist, dur, surge, noise)
+    ]
     assert np.allclose(vec, scalar)

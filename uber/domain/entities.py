@@ -37,14 +37,14 @@ class RideTier:
     matches the ``ride_tiers.csv`` column order.
     """
 
-    tier: str          # id: uberx, green, comfort, xl, black, van
+    tier: str  # id: uberx, green, comfort, xl, black, van
     display_name: str  # on-screen name
-    capacity: int      # passenger seats
-    base_fare: float   # € base fare
-    per_km: float      # €/km distance rate
-    per_min: float     # €/min time rate
-    booking_fee: float # € fixed booking fee
-    min_fare: float    # € guaranteed minimum price
+    capacity: int  # passenger seats
+    base_fare: float  # € base fare
+    per_km: float  # €/km distance rate
+    per_min: float  # €/min time rate
+    booking_fee: float  # € fixed booking fee
+    min_fare: float  # € guaranteed minimum price
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,14 +57,14 @@ class Driver:
     the driver churned mid-year. Field order matches the ``drivers.csv`` column order.
     """
 
-    driver_id: int          # key (1-based); FK target of rides.driver_id
-    home_district: str      # base district (biases where the driver's rides start)
-    activity_class: str     # casual / part_time / full_time
-    tenure_start: str       # first active day (ISO date)
-    tenure_end: str         # last active day (ISO date); < Dec 31 => churned
-    active_days: int        # days actually worked in 2024
-    n_rides: int            # total rides produced in 2024
-    driver_rating: float    # 1–5 rating (per-driver weak distractor)
+    driver_id: int  # key (1-based); FK target of rides.driver_id
+    home_district: str  # base district (biases where the driver's rides start)
+    activity_class: str  # casual / part_time / full_time
+    tenure_start: str  # first active day (ISO date)
+    tenure_end: str  # last active day (ISO date); < Dec 31 => churned
+    active_days: int  # days actually worked in 2024
+    n_rides: int  # total rides produced in 2024
+    driver_rating: float  # 1–5 rating (per-driver weak distractor)
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,11 +77,11 @@ class RideOption:
     equality still compares every field.
     """
 
-    tier: str          # tier id (uberx, green, ...); matches RideTier.tier
+    tier: str  # tier id (uberx, green, ...); matches RideTier.tier
     display_name: str  # on-screen name
-    price_eur: float   # model-predicted fare for this tier, in EUR (> 0)
-    eta_min: float     # estimated trip duration, in minutes (>= 0)
-    capacity: int      # passenger seats (>= 1)
+    price_eur: float  # model-predicted fare for this tier, in EUR (> 0)
+    eta_min: float  # estimated trip duration, in minutes (>= 0)
+    capacity: int  # passenger seats (>= 1)
 
     def __post_init__(self) -> None:
         if self.price_eur <= 0:

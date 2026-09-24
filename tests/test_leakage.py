@@ -25,7 +25,9 @@ PINNED_NUMERIC = ["distance_km", "duration_min", "surge_multiplier", "hour", "da
 @pytest.fixture(scope="module")
 def rides() -> pd.DataFrame:
     locations = repositories.build_locations_df()
-    _drivers, rides = generate_data.build_dataset(sampling.make_rng(config.SEED), locations, N_DRIVERS_TEST)
+    _drivers, rides = generate_data.build_dataset(
+        sampling.make_rng(config.SEED), locations, N_DRIVERS_TEST
+    )
     return rides
 
 
@@ -47,7 +49,9 @@ def test_leakage_column_present_and_excluded_from_signal(rides: pd.DataFrame) ->
 
 
 def test_leakage_commission_is_quarter_of_price(rides: pd.DataFrame) -> None:
-    resid = rides["commission_eur"].to_numpy(dtype=float) - config.COMMISSION_RATE * rides["price_eur"].to_numpy(dtype=float)
+    resid = rides["commission_eur"].to_numpy(dtype=float) - config.COMMISSION_RATE * rides[
+        "price_eur"
+    ].to_numpy(dtype=float)
     # only negligible Gaussian noise separates commission from 0.25 x price
     assert float(np.abs(resid).mean()) < 0.1
     assert float(resid.std()) == pytest.approx(config.COMMISSION_NOISE_STD, abs=0.01)

@@ -9,9 +9,9 @@ from uber.datagen import generate_data
 from uber.domain import config
 from uber.infrastructure import paths, repositories
 
-N_STREETS = 8655   # official viales in the Madrid callejero snapshot
-N_BARRIOS = 131    # municipal barrios
-N_DISTRICTS = 21   # distritos
+N_STREETS = 8655  # official viales in the Madrid callejero snapshot
+N_BARRIOS = 131  # municipal barrios
+N_DISTRICTS = 21  # distritos
 
 
 @pytest.fixture(scope="module")
@@ -21,7 +21,14 @@ def locations() -> pd.DataFrame:
 
 def test_columns_and_order(locations: pd.DataFrame) -> None:
     assert list(locations.columns) == repositories.LOCATION_COLUMNS
-    assert repositories.LOCATION_COLUMNS == ["location_id", "street", "neighborhood", "district", "lat", "lon"]
+    assert repositories.LOCATION_COLUMNS == [
+        "location_id",
+        "street",
+        "neighborhood",
+        "district",
+        "lat",
+        "lon",
+    ]
 
 
 def test_row_and_area_counts(locations: pd.DataFrame) -> None:
@@ -86,7 +93,9 @@ def test_accents_preserved(locations: pd.DataFrame) -> None:
 
 
 def test_generate_writes_locations(tmp_path) -> None:
-    written = generate_data.generate(tmp_path, n_drivers=5)  # tiny sim: this test only checks locations
+    written = generate_data.generate(
+        tmp_path, n_drivers=5
+    )  # tiny sim: this test only checks locations
     assert written[paths.LOCATIONS_CSV] == N_STREETS
     out = tmp_path / paths.LOCATIONS_CSV
     assert out.exists()

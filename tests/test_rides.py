@@ -110,8 +110,8 @@ def test_driver_id_is_valid_foreign_key(rides: pd.DataFrame, drivers: pd.DataFra
 
 def test_driver_panel_has_repeat_rides(rides: pd.DataFrame, drivers: pd.DataFrame) -> None:
     counts = rides["driver_id"].value_counts()
-    assert counts.max() > 1                       # a driver with many rides
-    assert (counts >= 2).mean() > 0.5             # most drivers are repeat drivers
+    assert counts.max() > 1  # a driver with many rides
+    assert (counts >= 2).mean() > 0.5  # most drivers are repeat drivers
     # the per-driver n_rides recorded on the roster matches the actual ride log
     logged = counts.reindex(drivers["driver_id"]).fillna(0).astype(int).to_numpy()
     assert logged.tolist() == drivers["n_rides"].tolist()
@@ -137,7 +137,9 @@ def test_rides_geo_distance_and_duration(rides: pd.DataFrame, locations: pd.Data
         assert row.duration_min == pytest.approx(pricing.duration_min(row.distance_km, row.hour))
 
 
-def test_rides_pickup_district_matches_location(rides: pd.DataFrame, locations: pd.DataFrame) -> None:
+def test_rides_pickup_district_matches_location(
+    rides: pd.DataFrame, locations: pd.DataFrame
+) -> None:
     districts = locations["district"].to_numpy()
     for row in rides.head(500).itertuples():
         assert row.pickup_district == districts[row.pickup_location_id - 1]

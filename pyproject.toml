@@ -1,8 +1,33 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "uber-price-prediction"
 version = "0.1.0"
-description = "Let's Build Uber's Algorithm — companion project to the neuroespresso series"
+description = "Let's Build Uber's Algorithm — a clean-architecture teaching project: synthetic Madrid ride data, an eight-part regression arc, and an interactive price simulator."
+readme = "README.md"
 requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "neuroespresso" }]
+keywords = [
+    "machine-learning",
+    "regression",
+    "scikit-learn",
+    "clean-architecture",
+    "teaching",
+    "synthetic-data",
+    "uber",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Education",
+]
 dependencies = [
     "pandas>=2.0",
     "numpy>=1.24",
@@ -11,8 +36,13 @@ dependencies = [
     "matplotlib>=3.7",
 ]
 
+[project.urls]
+Homepage = "https://github.com/neuroespresso/uber-price-prediction"
+Repository = "https://github.com/neuroespresso/uber-price-prediction"
+Issues = "https://github.com/neuroespresso/uber-price-prediction/issues"
+
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "ruff>=0.6", "pyright>=1.1"]
 
 [project.scripts]
 uber = "uber.cli.app:main"
@@ -22,6 +52,17 @@ include = ["uber*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+ignore = [
+    "B905",  # zip() strict= — the paired iterables are equal-length by construction here
+    "B006",  # the only mutable defaults are read-only shared constants, never mutated
+]
 
 [tool.pyright]
 extraPaths = ["."]

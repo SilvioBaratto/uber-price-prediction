@@ -46,7 +46,7 @@ class ModelPredictor:
         self.n_train = int(len(frame))
 
     @classmethod
-    def from_frame(cls, rides: pd.DataFrame, *, poly_degree: int = 2) -> "ModelPredictor":
+    def from_frame(cls, rides: pd.DataFrame, *, poly_degree: int = 2) -> ModelPredictor:
         """Fit directly from an in-memory rides frame (no file read)."""
         return cls(rides=rides, poly_degree=poly_degree)
 
@@ -74,8 +74,10 @@ class FormulaPredictor:
         prices = [
             pricing.price(self._by_id[str(tier)], float(distance), float(duration), float(surge))
             for tier, distance, duration, surge in zip(
-                frame["tier"], frame["distance_km"],
-                frame["duration_min"], frame["surge_multiplier"],
+                frame["tier"],
+                frame["distance_km"],
+                frame["duration_min"],
+                frame["surge_multiplier"],
             )
         ]
         return np.asarray(prices, dtype=float)

@@ -35,7 +35,9 @@ def _normalized(weights: tuple[float, ...]) -> np.ndarray:
     return w / w.sum()
 
 
-def build_drivers(rng: np.random.Generator, n_drivers: int, locations: pd.DataFrame) -> pd.DataFrame:
+def build_drivers(
+    rng: np.random.Generator, n_drivers: int, locations: pd.DataFrame
+) -> pd.DataFrame:
     """Build the year's driver roster (SPEC §2.6 steps 1–2), one row per driver.
 
     ``active_days`` / ``n_rides`` are placeholders (0) here — they are filled from the ride
@@ -45,10 +47,14 @@ def build_drivers(rng: np.random.Generator, n_drivers: int, locations: pd.DataFr
     year_start, year_days = _year_bounds()
 
     # 1. Activity class, right-skewed toward casual.
-    class_idx = rng.choice(len(config.ACTIVITY_CLASSES), size=n, p=_normalized(config.ACTIVITY_CLASS_WEIGHTS))
+    class_idx = rng.choice(
+        len(config.ACTIVITY_CLASSES), size=n, p=_normalized(config.ACTIVITY_CLASS_WEIGHTS)
+    )
 
     # 2. Tenure cohort + per-driver jitter, clipped to at most the whole year.
-    coh_idx = rng.choice(len(config.TENURE_COHORTS), size=n, p=_normalized(config.TENURE_COHORT_WEIGHTS))
+    coh_idx = rng.choice(
+        len(config.TENURE_COHORTS), size=n, p=_normalized(config.TENURE_COHORT_WEIGHTS)
+    )
     cohort_days = np.array([config.TENURE_COHORT_DAYS[c] for c in config.TENURE_COHORTS])
     jitter = rng.integers(-config.TENURE_JITTER_DAYS, config.TENURE_JITTER_DAYS + 1, size=n)
     tenure_len = np.clip(cohort_days[coh_idx] + jitter, 1, year_days)
@@ -118,7 +124,9 @@ def simulate_ride_events(
     n = len(drivers)
     year_start, _year_days = _year_bounds()
 
-    start_day = (drivers["tenure_start"].to_numpy(dtype="datetime64[D]") - year_start).astype(np.int64)
+    start_day = (drivers["tenure_start"].to_numpy(dtype="datetime64[D]") - year_start).astype(
+        np.int64
+    )
     end_day = (drivers["tenure_end"].to_numpy(dtype="datetime64[D]") - year_start).astype(np.int64)
     tenure_len = end_day - start_day + 1  # >= 1 by construction
 
@@ -156,7 +164,9 @@ def simulate_ride_events(
         w_driver = np.concatenate([w_driver, idle])
         w_day = np.concatenate([w_day, start_day[idle]])
         w_dow = np.concatenate([w_dow, start_day[idle] % 7])
-        rides_per_day = np.concatenate([rides_per_day, np.ones(idle.size, dtype=rides_per_day.dtype)])
+        rides_per_day = np.concatenate(
+            [rides_per_day, np.ones(idle.size, dtype=rides_per_day.dtype)]
+        )
 
     active_days = np.bincount(w_driver, minlength=n).astype(np.int64)
     n_rides = np.bincount(w_driver, weights=rides_per_day, minlength=n).astype(np.int64)

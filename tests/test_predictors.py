@@ -17,16 +17,22 @@ from uber.domain import config, pricing
 from uber.infrastructure import repositories
 from uber.infrastructure.predictors import FormulaPredictor, ModelPredictor
 
-PINNED = ["tier", "pickup_district", "distance_km", "duration_min",
-          "surge_multiplier", "hour", "day_of_week", "month"]
+PINNED = [
+    "tier",
+    "pickup_district",
+    "distance_km",
+    "duration_min",
+    "surge_multiplier",
+    "hour",
+    "day_of_week",
+    "month",
+]
 
 
 @pytest.fixture(scope="module")
 def rides() -> pd.DataFrame:
     locations = repositories.build_locations_df()
-    _drivers, rides = generate_data.build_dataset(
-        sampling.make_rng(config.SEED), locations, 250
-    )
+    _drivers, rides = generate_data.build_dataset(sampling.make_rng(config.SEED), locations, 250)
     return rides.sample(8000, random_state=config.SEED).reset_index(drop=True)
 
 

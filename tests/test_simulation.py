@@ -56,7 +56,9 @@ def test_home_district_valid(drivers: pd.DataFrame, locations: pd.DataFrame) -> 
 
 
 def test_driver_rating_in_range(drivers: pd.DataFrame) -> None:
-    assert drivers["driver_rating"].between(config.DRIVER_RATING_MIN, config.DRIVER_RATING_MAX).all()
+    assert (
+        drivers["driver_rating"].between(config.DRIVER_RATING_MIN, config.DRIVER_RATING_MAX).all()
+    )
 
 
 def test_tenure_within_year_and_ordered(drivers: pd.DataFrame) -> None:
@@ -73,8 +75,8 @@ def test_churn_present(drivers: pd.DataFrame) -> None:
     # all three tenure cohorts should be represented in the tenure-length spread
     start = drivers["tenure_start"].to_numpy(dtype="datetime64[D]")
     length = (end - start).astype("timedelta64[D]").astype(int) + 1
-    assert length.min() < 130            # short (~3mo) cohort present
-    assert length.max() > 300            # long (~12mo) cohort present
+    assert length.min() < 130  # short (~3mo) cohort present
+    assert length.max() > 300  # long (~12mo) cohort present
 
 
 def test_active_fleet_is_stationary(drivers: pd.DataFrame) -> None:
@@ -121,7 +123,7 @@ def test_counts_consistent_with_events(sim) -> None:
 
 def test_ride_counts_are_right_skewed(sim) -> None:
     _events, _active_days, n_rides = sim
-    assert (n_rides >= 2).mean() > 0.5           # most drivers have multiple rides
+    assert (n_rides >= 2).mean() > 0.5  # most drivers have multiple rides
     assert n_rides.max() > 5 * np.median(n_rides)  # heavy tail (full-timers)
 
 

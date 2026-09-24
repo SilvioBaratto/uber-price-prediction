@@ -35,12 +35,12 @@ N_RIDES = 50_000
 # --- Ride tiers (SPEC §2.2) ------------------------------------------------
 # Plausible but invented EUR tariffs, listed in increasing-price order. Adjustable here.
 TIERS: tuple[RideTier, ...] = (
-    RideTier("uberx",   "UberX",        4, 1.20, 0.90, 0.18, 0.90,  5.00),
-    RideTier("green",   "Uber Green",   4, 1.20, 0.90, 0.18, 0.90,  5.00),
-    RideTier("comfort", "Uber Comfort", 4, 1.80, 1.10, 0.22, 1.00,  7.00),
-    RideTier("xl",      "UberXL",       6, 2.50, 1.50, 0.28, 1.20,  9.00),
-    RideTier("black",   "Uber Black",   4, 4.00, 2.20, 0.45, 1.50, 12.00),
-    RideTier("van",     "Uber Van",     6, 4.50, 2.40, 0.50, 1.50, 14.00),
+    RideTier("uberx", "UberX", 4, 1.20, 0.90, 0.18, 0.90, 5.00),
+    RideTier("green", "Uber Green", 4, 1.20, 0.90, 0.18, 0.90, 5.00),
+    RideTier("comfort", "Uber Comfort", 4, 1.80, 1.10, 0.22, 1.00, 7.00),
+    RideTier("xl", "UberXL", 6, 2.50, 1.50, 0.28, 1.20, 9.00),
+    RideTier("black", "Uber Black", 4, 4.00, 2.20, 0.45, 1.50, 12.00),
+    RideTier("van", "Uber Van", 6, 4.50, 2.40, 0.50, 1.50, 14.00),
 )
 
 # --- Pricing dynamics (SPEC §2.4 / §2.5) -----------------------------------
@@ -48,23 +48,41 @@ TIERS: tuple[RideTier, ...] = (
 # overnight. Turns distance into duration. Flexible (SPEC §6); every entry is > 0 so any
 # positive-distance ride has a positive duration.
 SPEED_KMH_BY_HOUR: tuple[float, ...] = (
-    35.0, 35.0, 35.0, 35.0, 35.0, 33.0,   # 00–05 free-flowing overnight
-    28.0, 18.0, 16.0, 18.0,               # 06–09 morning ramp into rush
-    24.0, 24.0, 24.0, 24.0,               # 10–13 midday
-    25.0, 25.0, 23.0, 20.0,               # 14–17 afternoon
-    16.0, 16.0, 18.0,                     # 18–20 evening rush
-    26.0, 30.0, 32.0,                     # 21–23 late evening easing
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    35.0,
+    33.0,  # 00–05 free-flowing overnight
+    28.0,
+    18.0,
+    16.0,
+    18.0,  # 06–09 morning ramp into rush
+    24.0,
+    24.0,
+    24.0,
+    24.0,  # 10–13 midday
+    25.0,
+    25.0,
+    23.0,
+    20.0,  # 14–17 afternoon
+    16.0,
+    16.0,
+    18.0,  # 18–20 evening rush
+    26.0,
+    30.0,
+    32.0,  # 21–23 late evening easing
 )
 
 # Surge demand profile (SPEC §2.5): deterministic base multiplier per time bucket, applied
 # before the per-ride jitter. dow uses datetime.weekday(): 0=Mon .. 6=Sun.
-SURGE_CLAMP = (1.0, 3.0)      # (min, max) surge after jitter
-SURGE_OFFPEAK = 1.00          # weekday off-peak (10–12, 14–17 and other daytime)
-SURGE_MORNING_RUSH = 1.35     # weekday 07–09
-SURGE_EVENING_RUSH = 1.45     # weekday 18–20
-SURGE_LATE_NIGHT = 1.10       # weekday 00–05
-SURGE_WEEKEND_DAY = 1.05      # Sat/Sun daytime (incl. Sunday daytime)
-SURGE_WEEKEND_NIGHT = 2.20    # Fri & Sat nights 21–03 (the expensive case)
+SURGE_CLAMP = (1.0, 3.0)  # (min, max) surge after jitter
+SURGE_OFFPEAK = 1.00  # weekday off-peak (10–12, 14–17 and other daytime)
+SURGE_MORNING_RUSH = 1.35  # weekday 07–09
+SURGE_EVENING_RUSH = 1.45  # weekday 18–20
+SURGE_LATE_NIGHT = 1.10  # weekday 00–05
+SURGE_WEEKEND_DAY = 1.05  # Sat/Sun daytime (incl. Sunday daytime)
+SURGE_WEEKEND_NIGHT = 2.20  # Fri & Sat nights 21–03 (the expensive case)
 
 # Per-ride surge jitter (SPEC §2.5): multiplicative lognormal(0, sigma) noise, median 1.0,
 # so two identical trips at the same hour still differ before the [1.0, 3.0] clamp.
@@ -115,20 +133,56 @@ TENURE_JITTER_DAYS = 20
 # though correlated). Rides concentrate at commute peaks + evenings on weekdays, and shift to
 # late nights on weekends. Fri & Sat nights get an extra boost in simulation.py.
 HOUR_VOLUME_WEEKDAY = (
-    0.25, 0.15, 0.10, 0.08, 0.10, 0.25,   # 00–05 sparse overnight
-    0.60, 1.10, 1.30, 0.95,               # 06–09 morning commute peak
-    0.70, 0.80, 0.85, 0.80,               # 10–13 midday
-    0.75, 0.80, 0.95, 1.15,               # 14–17 afternoon build
-    1.35, 1.40, 1.15, 0.90,               # 18–21 evening peak
-    0.60, 0.40,                           # 22–23 wind-down
+    0.25,
+    0.15,
+    0.10,
+    0.08,
+    0.10,
+    0.25,  # 00–05 sparse overnight
+    0.60,
+    1.10,
+    1.30,
+    0.95,  # 06–09 morning commute peak
+    0.70,
+    0.80,
+    0.85,
+    0.80,  # 10–13 midday
+    0.75,
+    0.80,
+    0.95,
+    1.15,  # 14–17 afternoon build
+    1.35,
+    1.40,
+    1.15,
+    0.90,  # 18–21 evening peak
+    0.60,
+    0.40,  # 22–23 wind-down
 )
 HOUR_VOLUME_WEEKEND = (
-    0.90, 0.75, 0.60, 0.45, 0.30, 0.25,   # 00–05 nightlife carry-over then quiet
-    0.30, 0.45, 0.60, 0.75,               # 06–09 slow start
-    0.90, 1.05, 1.10, 1.05,               # 10–13 brunch/midday
-    1.00, 1.00, 1.05, 1.10,               # 14–17 afternoon
-    1.15, 1.20, 1.25, 1.30,               # 18–21 evening
-    1.35, 1.20,                           # 22–23 into the night
+    0.90,
+    0.75,
+    0.60,
+    0.45,
+    0.30,
+    0.25,  # 00–05 nightlife carry-over then quiet
+    0.30,
+    0.45,
+    0.60,
+    0.75,  # 06–09 slow start
+    0.90,
+    1.05,
+    1.10,
+    1.05,  # 10–13 brunch/midday
+    1.00,
+    1.00,
+    1.05,
+    1.10,  # 14–17 afternoon
+    1.15,
+    1.20,
+    1.25,
+    1.30,  # 18–21 evening
+    1.35,
+    1.20,  # 22–23 into the night
 )
 WEEKEND_NIGHT_VOLUME_BOOST = 1.5  # extra ride volume in 21–03 on Fri(4) & Sat(5) nights
 

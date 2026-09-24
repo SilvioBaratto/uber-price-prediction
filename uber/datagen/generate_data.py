@@ -53,7 +53,9 @@ LEAKAGE_COLUMNS = ["commission_eur"]
 RIDE_COLUMNS = SIGNAL_COLUMNS + DISTRACTOR_COLUMNS + LEAKAGE_COLUMNS
 
 
-def _district_members(locations: pd.DataFrame) -> tuple[pd.Index, np.ndarray, np.ndarray, np.ndarray]:
+def _district_members(
+    locations: pd.DataFrame,
+) -> tuple[pd.Index, np.ndarray, np.ndarray, np.ndarray]:
     """Group location ids by district for the home-district pickup bias.
 
     Returns ``(district_index, member_ids, block_start, block_size)`` where ``member_ids`` is a
@@ -110,7 +112,7 @@ def build_rides_df(
     ride_home_code = pd.Categorical(home_per_driver[driver_id - 1], categories=district_index).codes
     driver_rating = drivers["driver_rating"].to_numpy()[driver_id - 1]  # constant within a driver
 
-    # --- draws (fixed order: bias mask, uniform pickup, home-pick, dropoff, tiers, jitter, noise) ---
+    # --- draws (fixed order: bias, pickup, home-pick, dropoff, tiers, jitter, noise) ---
     biased = rng.random(n) < config.HOME_DISTRICT_PICKUP_PROB
     pickup_uniform = rng.integers(1, n_locations + 1, size=n, dtype=np.int64)
     u_home = rng.random(n)
@@ -148,11 +150,20 @@ def build_rides_df(
     booking_fee = np.array([tier_by_id[t].booking_fee for t in tuniques])[tcodes]
     min_fare = np.array([tier_by_id[t].min_fare for t in tuniques])[tcodes]
     price_eur = pricing.price_array(
-        base_fare, per_km, per_min, booking_fee, min_fare,
-        distance_km, duration_min, surge_multiplier, noise,
+        base_fare,
+        per_km,
+        per_min,
+        booking_fee,
+        min_fare,
+        distance_km,
+        duration_min,
+        surge_multiplier,
+        noise,
     )
     # Leakage column: a near-perfect linear function of the target (Uber's cut) + tiny noise.
-    commission_eur = config.COMMISSION_RATE * price_eur + rng.normal(0.0, config.COMMISSION_NOISE_STD, size=n)
+    commission_eur = config.COMMISSION_RATE * price_eur + rng.normal(
+        0.0, config.COMMISSION_NOISE_STD, size=n
+    )
 
     df = pd.DataFrame(
         {
@@ -201,7 +212,9 @@ def build_dataset(
     return drivers, rides
 
 
-def generate(out_dir: Path, seed: int = config.SEED, n_drivers: int = config.N_DRIVERS) -> dict[str, int]:
+def generate(
+    out_dir: Path, seed: int = config.SEED, n_drivers: int = config.N_DRIVERS
+) -> dict[str, int]:
     """Generate the CSVs into ``out_dir``. Returns ``{filename: row_count}``."""
     out_dir.mkdir(parents=True, exist_ok=True)
     written: dict[str, int] = {}
@@ -225,12 +238,19 @@ def generate(out_dir: Path, seed: int = config.SEED, n_drivers: int = config.N_D
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Generate the synthetic Madrid ride dataset.")
-    parser.add_argument("--seed", type=int, default=config.SEED, help="RNG seed (default: %(default)s)")
     parser.add_argument(
-        "--n-drivers", type=int, default=config.N_DRIVERS,
-        help="number of drivers to simulate; rides emerge from the simulation (default: %(default)s)",
+        "--seed", type=int, default=config.SEED, help="RNG seed (default: %(default)s)"
     )
-    parser.add_argument("--out-dir", type=Path, default=paths.RAW_DIR, help="output directory (default: data/raw)")
+    parser.add_argument(
+        "--n-drivers",
+        type=int,
+        default=config.N_DRIVERS,
+        help="number of drivers to simulate; rides emerge from the simulation "
+        "(default: %(default)s)",
+    )
+    parser.add_argument(
+        "--out-dir", type=Path, default=paths.RAW_DIR, help="output directory (default: data/raw)"
+    )
     args = parser.parse_args(argv)
 
     written = generate(args.out_dir, seed=args.seed, n_drivers=args.n_drivers)

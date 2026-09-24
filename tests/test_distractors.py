@@ -49,7 +49,10 @@ def test_distractor_columns_present_and_ordered(rides: pd.DataFrame) -> None:
     ]
     # the distractor block sits immediately after the signal + target columns
     n = len(generate_data.SIGNAL_COLUMNS)
-    assert generate_data.RIDE_COLUMNS[n:n + len(generate_data.DISTRACTOR_COLUMNS)] == generate_data.DISTRACTOR_COLUMNS
+    assert (
+        generate_data.RIDE_COLUMNS[n : n + len(generate_data.DISTRACTOR_COLUMNS)]
+        == generate_data.DISTRACTOR_COLUMNS
+    )
 
 
 def test_distractors_have_no_nulls(rides: pd.DataFrame) -> None:

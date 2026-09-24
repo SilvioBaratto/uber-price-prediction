@@ -18,10 +18,10 @@ from sklearn.linear_model import Lasso, Ridge
 from sklearn.model_selection import KFold, cross_validate
 
 from uber.datagen import generate_data, sampling
-from uber.modeling import arc as run
-from uber.modeling import pipeline as modeling
 from uber.domain import config
 from uber.infrastructure import repositories
+from uber.modeling import arc as run
+from uber.modeling import pipeline as modeling
 
 N_DRIVERS_TEST = 250  # ~107k emergent rides
 SEED = config.SEED
@@ -64,8 +64,8 @@ def test_part2_standardization_halves_error(rides: pd.DataFrame) -> None:
     baseline = run.run_part1(split).rmse_test
     raw = modeling.knn_pipeline(k_star, scale=False).fit(split.X_train, split.y_train)
     raw_rmse = modeling.rmse(split.y_test, np.asarray(raw.predict(split.X_test)))
-    assert res.rmse_test < 0.75 * raw_rmse   # scaling roughly halves the error
-    assert res.rmse_test < baseline          # a real model crushes the mean baseline
+    assert res.rmse_test < 0.75 * raw_rmse  # scaling roughly halves the error
+    assert res.rmse_test < baseline  # a real model crushes the mean baseline
 
     k1 = modeling.knn_pipeline(1).fit(split.X_train, split.y_train)
     assert modeling.rmse(split.y_train, np.asarray(k1.predict(split.X_train))) < 1e-6
@@ -80,15 +80,15 @@ def test_part3_overfit_and_curse(rides: pd.DataFrame) -> None:
     assert res.rmse_train is not None and res.rmse_train < 1e-9  # k=1 memorizes: 0 train error
     kstar = modeling.knn_pipeline(k_star).fit(split.X_train, split.y_train)
     kstar_test = modeling.rmse(split.y_test, np.asarray(kstar.predict(split.X_test)))
-    assert res.rmse_test > kstar_test                            # yet worse on held-out data
+    assert res.rmse_test > kstar_test  # yet worse on held-out data
 
     def k1_test(numeric: list[str], categorical: list[str]) -> float:
         model = modeling.knn_pipeline(1, numeric, categorical).fit(split.X_train, split.y_train)
         return modeling.rmse(split.y_test, np.asarray(model.predict(split.X_test)))
 
-    r11 = k1_test(modeling.PINNED_NUMERIC, ["tier"])                                    # 11 cols
-    r31 = k1_test(modeling.PINNED_NUMERIC, modeling.PINNED_CATEGORICAL)                 # 31 cols
-    r38 = k1_test(modeling.AUGMENTED_NUMERIC, modeling.AUGMENTED_CATEGORICAL)           # 38 cols
+    r11 = k1_test(modeling.PINNED_NUMERIC, ["tier"])  # 11 cols
+    r31 = k1_test(modeling.PINNED_NUMERIC, modeling.PINNED_CATEGORICAL)  # 31 cols
+    r38 = k1_test(modeling.AUGMENTED_NUMERIC, modeling.AUGMENTED_CATEGORICAL)  # 38 cols
     assert r11 < r31 < r38  # test RMSE rises monotonically as columns are layered on
 
 
@@ -98,10 +98,10 @@ def test_part4_ols_in_band_low_variance(rides: pd.DataFrame) -> None:
     res = run.run_part4(split)
 
     lo, hi = modeling.R2_BAND
-    assert res.r2_test is not None and lo <= res.r2_test <= hi   # R2 ~ 0.85, inside the band
+    assert res.r2_test is not None and lo <= res.r2_test <= hi  # R2 ~ 0.85, inside the band
     assert res.rmse_train is not None
     assert abs(res.rmse_train - res.rmse_test) / res.rmse_test < 0.05  # low variance (train ~ test)
-    assert res.rmse_test < 0.5 * float(np.std(split.y_test, ddof=0))   # ~2.6x below baseline
+    assert res.rmse_test < 0.5 * float(np.std(split.y_test, ddof=0))  # ~2.6x below baseline
 
 
 # --- Part 5 — coefficient standard errors & polynomial surge ---------------
@@ -111,20 +111,20 @@ def test_part5_poly_breaks_the_wall(rides: pd.DataFrame) -> None:
     res = run.run_part5(split)
 
     assert base.r2_test is not None and res.r2_test is not None
-    assert res.r2_test > 0.87                       # degree-2 clears the 0.87 wall
-    assert res.r2_test > base.r2_test + 0.02        # a real jump over plain OLS
-    assert res.rmse_test < base.rmse_test - 0.5     # >= 0.5 EUR RMSE improvement, no new data
+    assert res.r2_test > 0.87  # degree-2 clears the 0.87 wall
+    assert res.r2_test > base.r2_test + 0.02  # a real jump over plain OLS
+    assert res.rmse_test < base.rmse_test - 0.5  # >= 0.5 EUR RMSE improvement, no new data
 
-    # significance is read off the interpretable pinned OLS (see run_part5 for why, not the poly design)
+    # significance is read off the interpretable pinned OLS (see run_part5; not the poly design)
     pinned = modeling.ols_pipeline().fit(split.X_train, split.y_train)
     table = modeling.ols_coef_table(pinned, split.X_train, split.y_train)
     feats = [str(f) for f in table["feature"].to_numpy()]
     ts = table["t"].to_numpy(dtype=float)
     tmap = dict(zip(feats, ts))
-    assert abs(tmap["surge_multiplier"]) > 50       # the pricing physics is overwhelmingly real
+    assert abs(tmap["surge_multiplier"]) > 50  # the pricing physics is overwhelmingly real
     assert abs(tmap["distance_km"]) > 50
     districts = [abs(t) for f, t in zip(feats, ts) if f.startswith("pickup_district")]
-    assert min(districts) < 1.96                    # >= 1 district dummy is insignificant
+    assert min(districts) < 1.96  # >= 1 district dummy is insignificant
 
 
 # --- Part 6 — bias-variance & the U-curve ----------------------------------
@@ -134,7 +134,7 @@ def test_part6_ucurve(rides: pd.DataFrame, tmp_path) -> None:
     res = run.run_part6(split, args)
 
     csv_path = tmp_path / "part6_ucurve.csv"
-    assert csv_path.exists()                        # the sweep is persisted
+    assert csv_path.exists()  # the sweep is persisted
     curve = pd.read_csv(csv_path)
     ks = curve["k"].to_numpy()
     rt = curve["rmse_test"].to_numpy()
@@ -142,10 +142,10 @@ def test_part6_ucurve(rides: pd.DataFrame, tmp_path) -> None:
     def rmse_at(k: int) -> float:
         return float(rt[ks == k][0])
 
-    assert res.rmse_train is not None and res.rmse_train < 1e-6   # k=1 train error ~ 0
-    assert res.rmse_test < rmse_at(1)               # interior k* beats the overfit end
-    assert res.rmse_test < rmse_at(1000)            # ... and the underfit end
-    assert rmse_at(1000) < float(np.std(split.y_test, ddof=0))    # large-k still beats the mean
+    assert res.rmse_train is not None and res.rmse_train < 1e-6  # k=1 train error ~ 0
+    assert res.rmse_test < rmse_at(1)  # interior k* beats the overfit end
+    assert res.rmse_test < rmse_at(1000)  # ... and the underfit end
+    assert rmse_at(1000) < float(np.std(split.y_test, ddof=0))  # large-k still beats the mean
 
 
 # --- Part 7 — Ridge (L2) & Lasso (L1) --------------------------------------
@@ -156,11 +156,12 @@ def test_part7_lasso_selects_ridge_shrinks(rides: pd.DataFrame) -> None:
     ols = modeling.ols_pipeline(modeling.AUGMENTED_NUMERIC, modeling.AUGMENTED_CATEGORICAL)
     ols.fit(split.X_train, split.y_train)
     ols_rmse = modeling.rmse(split.y_test, np.asarray(ols.predict(split.X_test)))
-    assert res.rmse_test <= ols_rmse + 0.25         # same accuracy, simpler model
+    assert res.rmse_test <= ols_rmse + 0.25  # same accuracy, simpler model
 
     lasso = modeling.make_pipeline(
         Lasso(alpha=0.1, max_iter=50000),
-        modeling.AUGMENTED_NUMERIC, modeling.AUGMENTED_CATEGORICAL,
+        modeling.AUGMENTED_NUMERIC,
+        modeling.AUGMENTED_CATEGORICAL,
     ).fit(split.X_train, split.y_train)
     ridge = modeling.make_pipeline(
         Ridge(alpha=1.0), modeling.AUGMENTED_NUMERIC, modeling.AUGMENTED_CATEGORICAL
@@ -171,8 +172,8 @@ def test_part7_lasso_selects_ridge_shrinks(rides: pd.DataFrame) -> None:
     # all 4 distractor groups present (3 numeric + payment_method dummies)
     assert {"driver_rating", "customer_rating", "avg_vtat"} <= set(lasso_distractors)
     assert any(name.startswith("payment_method") for name in lasso_distractors)
-    assert max(lasso_distractors.values()) < 1e-8   # L1 zeros every distractor exactly
-    assert min(ridge_distractors.values()) > 0.0    # L2 shrinks but never selects
+    assert max(lasso_distractors.values()) < 1e-8  # L1 zeros every distractor exactly
+    assert min(ridge_distractors.values()) > 0.0  # L2 shrinks but never selects
 
 
 # --- Part 8 — k-fold CV, splits & data leakage -----------------------------
@@ -181,12 +182,12 @@ def test_part8_cv_and_leakage(rides: pd.DataFrame) -> None:
     res = run.run_part8(rides, args)
 
     lo, hi = modeling.R2_BAND
-    assert res.r2_test is not None and lo <= res.r2_test <= hi   # CV R2 mean inside the band
+    assert res.r2_test is not None and lo <= res.r2_test <= hi  # CV R2 mean inside the band
 
     X, y = modeling.make_xy(rides)
     kf = KFold(n_splits=5, shuffle=True, random_state=SEED)
     cv = cross_validate(modeling.ols_pipeline(), X, y, cv=kf, scoring=["r2"])
-    assert float(cv["test_r2"].std()) < 0.02        # tiny fold spread = trustworthy estimate
+    assert float(cv["test_r2"].std()) < 0.02  # tiny fold spread = trustworthy estimate
 
     leak = modeling.ols_pipeline(
         modeling.PINNED_NUMERIC + [modeling.LEAKAGE_FEATURE], modeling.PINNED_CATEGORICAL

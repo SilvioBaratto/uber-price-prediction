@@ -6,7 +6,7 @@ Task 3R.5; here we only guarantee the knobs exist and have coherent shapes.
 
 from __future__ import annotations
 
-from dataclasses import fields, is_dataclass
+from dataclasses import FrozenInstanceError, fields, is_dataclass
 
 import pytest
 
@@ -29,7 +29,7 @@ def test_driver_is_frozen_slotted_dataclass() -> None:
     assert is_dataclass(Driver)
     assert [f.name for f in fields(Driver)] == EXPECTED_DRIVER_FIELDS
     d = Driver(1, "Centro", "casual", "2024-01-01", "2024-03-31", 20, 95, 4.8)
-    with pytest.raises(Exception):
+    with pytest.raises(FrozenInstanceError):
         d.driver_id = 2  # type: ignore[misc]  # frozen
 
 
@@ -40,9 +40,7 @@ def test_n_drivers_default_is_full_madrid_scale() -> None:
 
 def test_activity_class_params_are_coherent() -> None:
     assert len(config.ACTIVITY_CLASSES) == len(config.ACTIVITY_CLASS_WEIGHTS)
-    assert config.ACTIVITY_CLASS_WEIGHTS == pytest.approx(
-        config.ACTIVITY_CLASS_WEIGHTS
-    )  # numeric
+    assert config.ACTIVITY_CLASS_WEIGHTS == pytest.approx(config.ACTIVITY_CLASS_WEIGHTS)  # numeric
     assert sum(config.ACTIVITY_CLASS_WEIGHTS) == pytest.approx(1.0)
     # right-skewed toward casual (research: >50% work 1-5 h/week)
     assert config.ACTIVITY_CLASS_WEIGHTS[0] > config.ACTIVITY_CLASS_WEIGHTS[-1]

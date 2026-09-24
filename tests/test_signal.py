@@ -25,7 +25,9 @@ N_DRIVERS_TEST = 250  # yields ~100k rides — plenty for a stable in-sample R²
 @pytest.fixture(scope="module")
 def rides() -> pd.DataFrame:
     locations = repositories.build_locations_df()
-    _drivers, rides = generate_data.build_dataset(sampling.make_rng(config.SEED), locations, N_DRIVERS_TEST)
+    _drivers, rides = generate_data.build_dataset(
+        sampling.make_rng(config.SEED), locations, N_DRIVERS_TEST
+    )
     return rides
 
 

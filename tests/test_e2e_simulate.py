@@ -33,7 +33,7 @@ def test_e2e_simulate_prints_a_quote_table(tmp_path) -> None:
 
     text = "\n".join(out_lines)
     assert rc == 0
-    assert "Tier" in text and "Price" in text   # the quote table header
-    assert "€" in text                          # priced rows
-    assert "->" in text                         # a resolved pickup -> drop-off trip was echoed
-    assert "Model trained on" in text           # retrain-on-launch actually ran
+    assert "Tier" in text and "Price" in text  # the quote table header
+    assert "€" in text  # priced rows
+    assert "->" in text  # a resolved pickup -> drop-off trip was echoed
+    assert "Model trained on" in text  # retrain-on-launch actually ran

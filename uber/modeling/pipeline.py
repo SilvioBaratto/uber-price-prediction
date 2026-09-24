@@ -58,8 +58,19 @@ NOISE_STD = config.NOISE_STD
 _DTYPES: dict[str, str] = {
     **{c: "category" for c in ("tier", "pickup_district", "payment_method")},
     **{c: "int16" for c in ("hour", "day_of_week", "month")},
-    **{c: "float64" for c in ("distance_km", "duration_min", "surge_multiplier", "driver_rating",
-                              "customer_rating", "avg_vtat", "commission_eur", TARGET)},
+    **{
+        c: "float64"
+        for c in (
+            "distance_km",
+            "duration_min",
+            "surge_multiplier",
+            "driver_rating",
+            "customer_rating",
+            "avg_vtat",
+            "commission_eur",
+            TARGET,
+        )
+    },
 }
 
 
@@ -118,8 +129,10 @@ def make_split(rides: pd.DataFrame, *, test_size: float = 0.2, seed: int = SEED)
         X, y, test_size=test_size, random_state=seed
     )
     return Split(
-        cast(pd.DataFrame, X_train), cast(pd.DataFrame, X_test),
-        np.asarray(y_train), np.asarray(y_test),
+        cast(pd.DataFrame, X_train),
+        cast(pd.DataFrame, X_test),
+        np.asarray(y_train),
+        np.asarray(y_test),
     )
 
 
@@ -143,8 +156,10 @@ def build_preprocessor(
     numeric_tf: Pipeline | StandardScaler | str
     if poly_degree is not None:
         numeric_tf = Pipeline(
-            [("poly", PolynomialFeatures(degree=poly_degree, include_bias=False)),
-             ("scale", StandardScaler())]
+            [
+                ("poly", PolynomialFeatures(degree=poly_degree, include_bias=False)),
+                ("scale", StandardScaler()),
+            ]
         )
     elif scale:
         numeric_tf = StandardScaler()
@@ -167,7 +182,9 @@ def make_pipeline(
 ) -> Pipeline:
     """``Pipeline([("pre", preprocessor), ("est", estimator)])`` — step names are load-bearing
     (coef extraction relies on ``"pre"``/``"est"``)."""
-    pre = build_preprocessor(numeric, categorical, scale=scale, poly_degree=poly_degree, dense=dense)
+    pre = build_preprocessor(
+        numeric, categorical, scale=scale, poly_degree=poly_degree, dense=dense
+    )
     return Pipeline([("pre", pre), ("est", estimator)])
 
 
@@ -193,7 +210,9 @@ def ols_pipeline(
     dense: bool = True,
 ) -> Pipeline:
     """OLS (``LinearRegression``) pipeline; dense design for exact coefficient inference."""
-    return make_pipeline(LinearRegression(), numeric, categorical, poly_degree=poly_degree, dense=dense)
+    return make_pipeline(
+        LinearRegression(), numeric, categorical, poly_degree=poly_degree, dense=dense
+    )
 
 
 # --- Metrics ----------------------------------------------------------------
@@ -233,7 +252,7 @@ def ols_coef_table(
     est = fitted_pipeline.named_steps["est"]
     design = np.asarray(pre.transform(X_train), dtype=float)
     n = design.shape[0]
-    Xd = np.column_stack([np.ones(n), design])              # prepend intercept column
+    Xd = np.column_stack([np.ones(n), design])  # prepend intercept column
     beta = np.concatenate([[float(est.intercept_)], np.asarray(est.coef_, dtype=float).ravel()])
 
     resid = np.asarray(y_train, dtype=float) - fitted_pipeline.predict(X_train)

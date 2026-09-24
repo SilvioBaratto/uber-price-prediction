@@ -79,7 +79,9 @@ def _ensure_raw() -> Path:
     if not RAW_CACHE.exists():
         RAW_CACHE.parent.mkdir(parents=True, exist_ok=True)
         print(f"downloading callejero addresses -> {RAW_CACHE} ...")
-        req = urllib.request.Request(ADDRESSES_URL, headers={"User-Agent": "uber-price-prediction/0.1"})
+        req = urllib.request.Request(
+            ADDRESSES_URL, headers={"User-Agent": "uber-price-prediction/0.1"}
+        )
         with urllib.request.urlopen(req, timeout=300) as resp, RAW_CACHE.open("wb") as fh:
             fh.write(resp.read())
     return RAW_CACHE
@@ -106,11 +108,13 @@ def build() -> pd.DataFrame:
         dcode = int(_mode_first(sub["dcode"]))
         bcode = int(_mode_first(sub["bcode"]))
         raw_name = " ".join(
-            part for part in (
+            part
+            for part in (
                 _mode_first(sub["VIA_CLASE"]).strip(),
                 str(_mode_first(sub["VIA_PAR"])).strip(),
                 _mode_first(sub["VIA_NOMBRE_ACENTOS"]).strip(),
-            ) if part and part != "nan"
+            )
+            if part and part != "nan"
         )
         rows.append(
             {
@@ -123,7 +127,9 @@ def build() -> pd.DataFrame:
         )
 
     out = pd.DataFrame(rows)
-    out = out.sort_values(["district", "neighborhood", "street"], kind="stable").reset_index(drop=True)
+    out = out.sort_values(["district", "neighborhood", "street"], kind="stable").reset_index(
+        drop=True
+    )
     out.insert(0, "location_id", range(1, len(out) + 1))
     return out
 

@@ -16,9 +16,9 @@ import pytest
 from sklearn.model_selection import train_test_split
 
 from uber.datagen import generate_data, sampling
-from uber.modeling import pipeline as modeling
 from uber.domain import config
 from uber.infrastructure import csv_io, repositories
+from uber.modeling import pipeline as modeling
 
 N_DRIVERS_TEST = 250  # ~107k emergent rides
 
@@ -51,13 +51,17 @@ def test_feature_set_shapes() -> None:
     assert not set(modeling.EXCLUDED_IDS) & set(modeling.CANDIDATE_FEATURES)
     # re-exports match config
     assert (modeling.SEED, modeling.R2_BAND, modeling.NOISE_STD) == (
-        config.SEED, config.R2_BAND, config.NOISE_STD
+        config.SEED,
+        config.R2_BAND,
+        config.NOISE_STD,
     )
     assert 10 in modeling.K_GRID_TUNE  # the SPEC-anchored good k is a candidate
 
 
 # --- load_rides -------------------------------------------------------------
-def test_load_rides_keeps_only_candidate_features_and_target(rides_csv: str, rides: pd.DataFrame) -> None:
+def test_load_rides_keeps_only_candidate_features_and_target(
+    rides_csv: str, rides: pd.DataFrame
+) -> None:
     loaded = modeling.load_rides(rides_csv)
     assert list(loaded.columns) == modeling.CANDIDATE_FEATURES + [modeling.TARGET]
     assert len(loaded) == len(rides)
@@ -97,7 +101,7 @@ def test_split_is_deterministic(rides: pd.DataFrame) -> None:
 
 
 def test_split_row_partition_is_column_invariant(rides: pd.DataFrame) -> None:
-    """The 'one fixed split': the row partition is identical regardless of which columns X carries."""
+    """The 'one fixed split': the row partition is identical for any columns X carries."""
     _, y = modeling.make_xy(rides)
     pinned = cast(pd.DataFrame, rides[modeling.PINNED_NUMERIC + modeling.PINNED_CATEGORICAL])
     candidate = cast(pd.DataFrame, rides[modeling.CANDIDATE_FEATURES])
@@ -127,7 +131,9 @@ def test_preprocessor_widths(
 
 
 def test_preprocessor_passthrough_unscaled(rides: pd.DataFrame) -> None:
-    pre = modeling.build_preprocessor(modeling.PINNED_NUMERIC, modeling.PINNED_CATEGORICAL, scale=False)
+    pre = modeling.build_preprocessor(
+        modeling.PINNED_NUMERIC, modeling.PINNED_CATEGORICAL, scale=False
+    )
     out = pre.fit_transform(rides)
     # unscaled numeric branch preserves the raw distance_km column values (first numeric col)
     assert np.allclose(np.sort(out[:, 0]), np.sort(rides["distance_km"].to_numpy()))

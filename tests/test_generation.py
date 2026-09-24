@@ -28,11 +28,11 @@ from uber.infrastructure import paths, repositories
 PINNED_NUMERIC = ["distance_km", "duration_min", "surge_multiplier", "hour", "day_of_week", "month"]
 PINNED_CATEGORICAL = ["tier", "pickup_district"]
 
-N_DRIVERS_TEST = 250   # emergent rides comfortably exceed 50k, but the suite stays fast
-N_ROSTER = 3000        # the tenure/stationarity checks need a larger roster; building it is cheap
+N_DRIVERS_TEST = 250  # emergent rides comfortably exceed 50k, but the suite stays fast
+N_ROSTER = 3000  # the tenure/stationarity checks need a larger roster; building it is cheap
 N_LOCATIONS = 8655
 
-YEAR_DAYS = 366        # 2024 is a leap year
+YEAR_DAYS = 366  # 2024 is a leap year
 JAN1 = np.datetime64("2024-01-01")
 DEC31 = np.datetime64("2024-12-31")
 
@@ -88,7 +88,15 @@ def test_s5_2_integrity(rides: pd.DataFrame) -> None:
     assert int(rides.isnull().sum().sum()) == 0
     # row count is emergent from the driver simulation, well above 50k even at 250 drivers
     assert len(rides) > 50_000
-    for col in ("ride_id", "driver_id", "pickup_location_id", "dropoff_location_id", "hour", "day_of_week", "month"):
+    for col in (
+        "ride_id",
+        "driver_id",
+        "pickup_location_id",
+        "dropoff_location_id",
+        "hour",
+        "day_of_week",
+        "month",
+    ):
         assert pd.api.types.is_integer_dtype(rides[col]), f"{col} is not integer"
     for col in ("distance_km", "duration_min", "surge_multiplier", "price_eur", "commission_eur"):
         assert pd.api.types.is_float_dtype(rides[col]), f"{col} is not float"
@@ -117,12 +125,14 @@ def test_s5_4_geographic_consistency(rides: pd.DataFrame, locations: pd.DataFram
 
 # --- §5.5 Tier ordering: equivalent trips priced uberx <= ... <= van -------
 def test_s5_5_tier_ordering(rides: pd.DataFrame) -> None:
-    order = [t.tier for t in config.TIERS]              # increasing-price order (SPEC §2.2)
-    band = rides["distance_km"].between(5.0, 10.0)       # "equivalent" trips: one distance band
+    order = [t.tier for t in config.TIERS]  # increasing-price order (SPEC §2.2)
+    band = rides["distance_km"].between(5.0, 10.0)  # "equivalent" trips: one distance band
     means = rides.loc[band].groupby("tier")["price_eur"].mean().reindex(order)
     # Non-decreasing across the declared order. uberx/green share identical tariffs (a deliberate
     # tie), so allow a small tolerance there; the genuinely distinct tiers are strictly ordered.
-    assert (means.diff().dropna() >= -0.75).all(), f"tier means not ordered: {means.round(2).to_dict()}"
+    assert (means.diff().dropna() >= -0.75).all(), (
+        f"tier means not ordered: {means.round(2).to_dict()}"
+    )
     assert means.idxmax() == "van" and means.idxmin() in ("uberx", "green")
     assert means["green"] < means["comfort"] < means["xl"] < means["black"] < means["van"]
 
@@ -177,11 +187,13 @@ def test_s5_10_driver_panel(rides: pd.DataFrame, drivers: pd.DataFrame) -> None:
     # every simulated driver gives at least one ride, so the id sets coincide exactly
     assert set(rides["driver_id"]) == set(drivers["driver_id"])
     counts = rides["driver_id"].value_counts()
-    assert (counts >= 2).mean() > 0.5              # most drivers are repeat drivers
-    assert counts.max() > 5 * counts.median()      # right-skewed: a heavy tail of full-timers
+    assert (counts >= 2).mean() > 0.5  # most drivers are repeat drivers
+    assert counts.max() > 5 * counts.median()  # right-skewed: a heavy tail of full-timers
     # driver_id / driver_rating are metadata — never part of the pinned OLS signal set
     assert "driver_id" not in PINNED_NUMERIC and "driver_id" not in PINNED_CATEGORICAL
-    r = np.corrcoef(rides["driver_rating"].to_numpy(dtype=float), rides["price_eur"].to_numpy(dtype=float))[0, 1]
+    r = np.corrcoef(
+        rides["driver_rating"].to_numpy(dtype=float), rides["price_eur"].to_numpy(dtype=float)
+    )[0, 1]
     assert abs(r) < 0.05, f"driver_rating correlation with price_eur = {r:.4f}"
 
 
@@ -190,14 +202,14 @@ def test_s5_11_tenure_churn(roster: pd.DataFrame) -> None:
     start = roster["tenure_start"].to_numpy(dtype="datetime64[D]")
     end = roster["tenure_end"].to_numpy(dtype="datetime64[D]")
     churned = (end < DEC31).mean()
-    assert 0.3 < churned < 0.95                    # a real churned fraction, but not everyone
+    assert 0.3 < churned < 0.95  # a real churned fraction, but not everyone
     length = (end - start).astype("timedelta64[D]").astype(int) + 1
-    assert length.min() < 130                      # short (~3mo) cohort present
-    assert length.max() > 300                      # long (~12mo) cohort present
+    assert length.min() < 130  # short (~3mo) cohort present
+    assert length.max() > 300  # long (~12mo) cohort present
     # No January cliff: the number of drivers active on each calendar day is ~flat.
     s = (start - JAN1).astype(int)
     e = (end - JAN1).astype(int)
-    diff = np.zeros(YEAR_DAYS + 1, dtype=int)       # +1 so end==last-day decrements out of range
+    diff = np.zeros(YEAR_DAYS + 1, dtype=int)  # +1 so end==last-day decrements out of range
     np.add.at(diff, s, 1)
     np.add.at(diff, e + 1, -1)
     active = np.cumsum(diff)[:YEAR_DAYS]

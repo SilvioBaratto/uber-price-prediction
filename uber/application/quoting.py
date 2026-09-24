@@ -20,8 +20,14 @@ from uber.domain.entities import Location, RideOption, TripRequest
 # The pinned model feature columns the predictor consumes (SPEC data contract). Kept here because
 # producing this row is the use case's responsibility; the concrete predictor selects by name.
 FEATURE_COLUMNS = [
-    "tier", "pickup_district", "distance_km", "duration_min",
-    "surge_multiplier", "hour", "day_of_week", "month",
+    "tier",
+    "pickup_district",
+    "distance_km",
+    "duration_min",
+    "surge_multiplier",
+    "hour",
+    "day_of_week",
+    "month",
 ]
 
 
@@ -56,8 +62,10 @@ class QuoteService:
         hour, dow, month = request.when.hour, request.when.weekday(), request.when.month
 
         distance_km = pricing.road_distance(
-            request.origin.lat, request.origin.lon,
-            request.destination.lat, request.destination.lon,
+            request.origin.lat,
+            request.origin.lon,
+            request.destination.lat,
+            request.destination.lon,
         )
         duration = pricing.duration_min(distance_km, hour)
         surge_multiplier = pricing.surge(hour, dow)

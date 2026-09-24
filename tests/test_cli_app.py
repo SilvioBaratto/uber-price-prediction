@@ -62,7 +62,9 @@ def test_run_arc_forwards_options_to_module_main(monkeypatch: pytest.MonkeyPatch
 def test_python_m_uber_help_runs() -> None:
     result = subprocess.run(
         [sys.executable, "-m", "uber", "--help"],
-        capture_output=True, text=True, cwd=str(paths.PROJECT_ROOT),
+        capture_output=True,
+        text=True,
+        cwd=str(paths.PROJECT_ROOT),
     )
     assert result.returncode == 0
     assert "generate-data" in result.stdout

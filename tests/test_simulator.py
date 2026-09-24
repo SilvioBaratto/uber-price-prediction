@@ -7,8 +7,8 @@ I/O is injected (``input_fn`` / ``out``) so the loop is driven by scripted input
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import datetime
-from typing import Callable
 
 from uber.application.quoting import QuoteService
 from uber.cli.simulator import run_simulator
@@ -54,7 +54,8 @@ def _make(inputs: list[str]) -> tuple[list[str], Callable[[], None]]:
 
     def run() -> None:
         run_simulator(
-            service, locations,
+            service,
+            locations,
             input_fn=lambda _prompt="": next(it),
             out=out_lines.append,
         )
@@ -66,8 +67,8 @@ def test_simulator_quotes_a_trip_then_quits() -> None:
     out_lines, run = _make(["Sol", "Alcocer", "q"])
     run()
     text = "\n".join(out_lines)
-    assert "Tier" in text and "Price" in text     # the quote table rendered
-    assert "UberX" in text                          # at least one tier row
+    assert "Tier" in text and "Price" in text  # the quote table rendered
+    assert "UberX" in text  # at least one tier row
     assert "Puerta del Sol" in text and "Alberto Alcocer" in text  # the resolved trip echoed
 
 

@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 
 from uber.datagen import generate_data
-from uber.domain import config
 from uber.infrastructure import paths, repositories
 
 # Declared tier ids in increasing-price order (SPEC §2.2).

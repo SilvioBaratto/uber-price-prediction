@@ -96,8 +96,16 @@ def test_quote_feature_frame_has_pinned_columns_and_time_fields() -> None:
     _service(pred).quote(ORIGIN, DEST, WHEN)
     frame = pred.last_frame
     assert frame is not None
-    for col in ("distance_km", "duration_min", "surge_multiplier", "hour",
-                "day_of_week", "month", "tier", "pickup_district"):
+    for col in (
+        "distance_km",
+        "duration_min",
+        "surge_multiplier",
+        "hour",
+        "day_of_week",
+        "month",
+        "tier",
+        "pickup_district",
+    ):
         assert col in frame.columns
     assert (frame["hour"] == WHEN.hour).all()
     assert (frame["day_of_week"] == WHEN.weekday()).all()

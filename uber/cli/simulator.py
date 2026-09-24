@@ -8,7 +8,7 @@ loop is fully driven and captured in tests; the composition root wires the real 
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 from uber.application.ports import LocationRepository
 from uber.application.quoting import QuoteService

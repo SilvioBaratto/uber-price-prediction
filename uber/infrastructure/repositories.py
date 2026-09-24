@@ -92,8 +92,12 @@ class CsvLocationRepository:
             locations = [
                 Location(int(lid), str(street), str(neigh), str(district), float(lat), float(lon))
                 for lid, street, neigh, district, lat, lon in zip(
-                    df["location_id"], df["street"], df["neighborhood"],
-                    df["district"], df["lat"], df["lon"],
+                    df["location_id"],
+                    df["street"],
+                    df["neighborhood"],
+                    df["district"],
+                    df["lat"],
+                    df["lon"],
                 )
             ]
             self._locations = locations
@@ -137,13 +141,18 @@ class CsvTierRepository:
                 raise ValueError(f"{self._path} is missing columns: {sorted(missing)}")
             self._tiers = [
                 RideTier(
-                    str(tier), str(display_name), int(capacity), float(base_fare),
-                    float(per_km), float(per_min), float(booking_fee), float(min_fare),
+                    str(t), str(dn), int(cap), float(bf),
+                    float(pk), float(pm), float(bk), float(mf),
                 )
-                for tier, display_name, capacity, base_fare, per_km, per_min, booking_fee, min_fare
-                in zip(
-                    df["tier"], df["display_name"], df["capacity"], df["base_fare"],
-                    df["per_km"], df["per_min"], df["booking_fee"], df["min_fare"],
+                for t, dn, cap, bf, pk, pm, bk, mf in zip(
+                    df["tier"],
+                    df["display_name"],
+                    df["capacity"],
+                    df["base_fare"],
+                    df["per_km"],
+                    df["per_min"],
+                    df["booking_fee"],
+                    df["min_fare"],
                 )
             ]
         return self._tiers

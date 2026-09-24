@@ -15,8 +15,8 @@ This module is the only place the layers are wired together; everything else dep
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from uber.infrastructure import paths
 
@@ -80,24 +80,30 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     gen = sub.add_parser(
-        "generate-data", add_help=False,
+        "generate-data",
+        add_help=False,
         help="generate the synthetic Madrid dataset (see: uber generate-data --help)",
     )
     gen.set_defaults(func=_handle_generate_data)
 
     arc_cmd = sub.add_parser(
-        "run-arc", add_help=False,
+        "run-arc",
+        add_help=False,
         help="run the eight-part regression arc (see: uber run-arc --help)",
     )
     arc_cmd.set_defaults(func=_handle_run_arc)
 
     sim = sub.add_parser("simulate", help="interactive A->B ride-price simulator")
     sim.add_argument(
-        "--rides", type=Path, default=paths.RAW_DIR / paths.RIDES_CSV,
+        "--rides",
+        type=Path,
+        default=paths.RAW_DIR / paths.RIDES_CSV,
         help="rides.csv used to retrain the model on launch (default: data/raw/rides.csv)",
     )
     sim.add_argument(
-        "--max-train-rows", type=int, default=None,
+        "--max-train-rows",
+        type=int,
+        default=None,
         help="cap training rows for a faster launch (default: all rows)",
     )
     sim.set_defaults(func=_handle_simulate)
