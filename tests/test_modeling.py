@@ -15,8 +15,8 @@ import pandas as pd
 import pytest
 from sklearn.model_selection import train_test_split
 
-from uber import modeling
 from uber.datagen import generate_data, sampling
+from uber.modeling import pipeline as modeling
 from uber.domain import config
 from uber.infrastructure import csv_io, repositories
 

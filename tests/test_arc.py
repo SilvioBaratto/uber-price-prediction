@@ -17,9 +17,9 @@ from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import Lasso, Ridge
 from sklearn.model_selection import KFold, cross_validate
 
-import run
-from uber import modeling
 from uber.datagen import generate_data, sampling
+from uber.modeling import arc as run
+from uber.modeling import pipeline as modeling
 from uber.domain import config
 from uber.infrastructure import repositories
 

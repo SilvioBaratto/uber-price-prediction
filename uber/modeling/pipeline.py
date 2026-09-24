@@ -2,8 +2,8 @@
 
 Single source of truth for the arc's feature sets, the one fixed train/test split, the
 scikit-learn preprocessing/pipeline wiring, the metric helpers, OLS coefficient inference and
-the final summary-table formatter. Every ``run_partN`` in ``run.py`` imports from here so the
-preprocessing is byte-identical across parts — ``run.py`` never re-declares a
+the final summary-table formatter. Every ``run_partN`` in :mod:`uber.modeling.arc` imports from
+here so the preprocessing is byte-identical across parts — the arc never re-declares a
 ``ColumnTransformer``. scikit-learn throughout; ``root_mean_squared_error`` is used because
 sklearn 1.9 removed ``mean_squared_error(squared=False)``.
 
