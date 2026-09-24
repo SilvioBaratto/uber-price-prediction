@@ -1,48 +1,131 @@
 # uber-price-prediction
 
-Companion project to the series **"Let's Build Uber's Algorithm"** (neuroespresso channel).
+[![CI](https://github.com/neuroespresso/uber-price-prediction/actions/workflows/ci.yml/badge.svg)](https://github.com/neuroespresso/uber-price-prediction/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
+[![Code style: ruff](https://img.shields.io/badge/style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
-## Project goal
+Companion project to the series **"Let's Build Uber's Algorithm"** (neuroespresso).
+Build a ride-hailing price engine for **Madrid** from scratch — a synthetic dataset,
+an eight-part regression arc, and a terminal simulator that prices every ride tier
+with a model retrained on launch.
 
-Simulate, **in the terminal**, a ride-hailing platform in **Madrid**.
-
-The user imagines living in Madrid, picks a start point **A** and a destination **B**
-in the city, and the program shows the **full list of available rides** — UberX,
-Comfort, XL, Black, Van… — each with its **estimated price** and ETA. Exactly what you
-see when you open the app and all the options appear.
-
-Each ride's price is **not hand-written**: it is produced by the regression model built
-throughout the series. Every episode improves the estimate; in the end the model powers
-the simulator.
-
-> Simplified for teaching: this is not Uber's real price list, it's the core idea
-> (estimate a price from a few variables and present the options) rebuilt as a project
+> Simplified for teaching: this is not Uber's real price list, it's the core idea —
+> estimate a price from a few variables and present the options — rebuilt as a project
 > you can run from the terminal.
 
-## How it works (flow)
+```text
+Pickup (street name or id, 'q' to quit): Puerta del Sol
+  -> Plaza de la Puerta del Sol (Centro)
+Drop-off (street name or id, 'q' to quit): Gran Vía
+  -> Calle Gran Vía (Centro)
 
-1. pick **A** and **B** among Madrid's points (or type them);
-2. the program computes the trip **distance** (km) and **estimated duration** (min);
-3. it reads the **current conditions**: hour of day, day of week, surge/demand;
-4. for **each available tier**, the model **predicts the price**;
-5. the terminal prints the **full list**: tier, price (€), ETA.
+Plaza de la Puerta del Sol -> Calle Gran Vía
+Tier           Price    ETA  Seats
+------------  ------  -----  -----
+UberX          €6.90  4 min      4
+Uber Green     €7.10  4 min      4
+Uber Comfort   €8.40  4 min      4
+UberXL         €9.20  4 min      6
+Uber Black    €12.75  4 min      4
+Uber Van      €14.10  4 min      6
+```
+
+_(Illustrative figures — real prices come from the model retrained at launch.)_
+
+## Quickstart
+
+```bash
+python -m venv .venv
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+
+uber generate-data --n-drivers 200   # build a fast, dev-sized dataset into data/raw/
+uber run-arc                         # train the models, print RMSE/R² part by part
+uber simulate                        # interactive A -> B ride-price simulator
+```
+
+Every command is also reachable as `python -m uber <subcommand>`. Run
+`uber --help` (or `uber <subcommand> --help`) for the full options.
+
+The simulator **retrains the price model on every launch** from `rides.csv` (no model
+file is shipped). On the full dataset that read can be large — cap it for a snappy start:
+
+```bash
+uber simulate --max-train-rows 200000
+```
+
+## How it works
+
+1. pick **A** and **B** among Madrid's streets (by name or id);
+2. compute the trip **distance** (km) and **estimated duration** (min);
+3. read the **current conditions**: hour of day, day of week, surge/demand;
+4. for **each tier**, the model **predicts the price**;
+5. the terminal prints the **full list**: tier, price (€), ETA, seats.
+
+Each price is produced by a fitted regression model — never hand-written.
+
+## Architecture
+
+The code follows **clean architecture**: dependencies point inward and inner layers
+never import outer ones. The pure business rules sit at the center; I/O and the CLI
+live at the edges and are wired together only in the composition root (`uber/cli/app.py`).
+
+```
+        cli  ─────────▶  application  ─────────▶  domain
+   (entry points,     (use cases + ports,      (entities, pricing,
+    composition)         Protocols)             business config)
+        │                    ▲
+        │                    │ implements ports
+        └────────▶  infrastructure  (CSV repositories, predictors, clock, paths)
+                             ▲
+        datagen ─────────────┘   modeling ─────▶  domain + infrastructure
+   (synthetic-data pipeline)   (the ML arc — supporting feature packages)
+```
+
+```
+uber/
+  __main__.py               python -m uber -> cli.app.main()
+  domain/
+    entities.py             Location, RideTier, Driver, RideOption, TripRequest
+    pricing.py              haversine, road_distance, duration, surge, price (ground truth)
+    config.py               business/sim constants + the tier catalog
+  application/
+    ports.py                Protocols: LocationRepository, TierRepository, PricePredictor, Clock
+    quoting.py              QuoteService.quote(origin, dest, when) -> list[RideOption]
+  infrastructure/
+    paths.py                project paths and filenames
+    csv_io.py  ncr.py       CSV write mechanics; NCR empirical supports
+    repositories.py         Csv{Location,Tier}Repository + the reference-table builders
+    predictors.py           ModelPredictor (retrain-on-launch), FormulaPredictor (test double)
+    clock.py                SystemClock
+  datagen/                  sampling, simulation, generate_data  (the synthetic dataset)
+  modeling/
+    pipeline.py             feature sets, the fixed split, preprocessing, metrics, report
+    arc.py                  the eight parts + orchestration
+  cli/
+    app.py                  the `uber` CLI (generate-data | run-arc | simulate)
+    simulator.py            the interactive A->B loop
+    render.py               the aligned quote table
+run.py                      back-compat shim -> uber.modeling.arc.main
+```
 
 ## The data
 
-Three tables, each with a precise role in the flow above.
+Generated into `data/raw/` by `uber generate-data`. The three small reference tables are
+committed; the large `rides.csv` is git-ignored and rebuilt from the seed.
 
-### `madrid_locations.csv` — the map (points in Madrid)
-Used in step 2 to compute the A→B distance.
+### `madrid_locations.csv` — the map (streets in Madrid)
 
 | Column | Type | Note |
 |---|---|---|
 | `location_id` | int | key |
+| `street` | str | street name (vial) |
 | `neighborhood` | str | Madrid neighborhood (barrio) |
 | `district` | str | district (distrito) it belongs to |
 | `lat`, `lon` | float | coordinates, for distance (haversine × road factor) |
 
 ### `ride_tiers.csv` — the ride catalog
-Used in step 4: which options exist and with which price parameters.
 
 | Column | Type | Note |
 |---|---|---|
@@ -56,8 +139,9 @@ Used in step 4: which options exist and with which price parameters.
 | `min_fare` | € | guaranteed minimum price |
 
 ### `rides.csv` — the ride history (what the model trains on)
-Used to **train** and validate the price model of steps 4–5. Here the price
-**genuinely depends** on the features (distance, duration, tier, surge, hour…).
+
+Emergent output of a seeded, day-by-day driver-population simulation. Here the price
+**genuinely depends** on the features.
 
 | Column | Type | Role |
 |---|---|---|
@@ -70,16 +154,15 @@ Used to **train** and validate the price model of steps 4–5. Here the price
 | `pickup_district` | cat | pickup zone |
 | `price_eur` | € | **target** |
 
-> ⚠️ The Kaggle dataset downloaded at the start (*NCR Uber 2024*, India) is **not
-> suitable** as the target data: it's synthetic dashboard data, the price is
-> uncorrelated with everything (R² ≈ 0), and the city is wrong. `rides.csv` is a
-> **Madrid-specific** dataset with real price signal. (We do reuse NCR's empirical
-> column distributions to make realistic distractor features — see `SPEC.md`.)
+> ⚠️ The Kaggle *NCR Uber 2024* (India) dataset is **not** suitable as the target: its
+> price is uncorrelated with everything (R² ≈ 0) and the city is wrong. `rides.csv` is a
+> Madrid-specific dataset with real price signal. We only reuse NCR's empirical column
+> distributions to build realistic distractor features.
 
 ## The model, part by part
 
 The arc teaches a **progression**: each part lowers the price-estimation error (RMSE).
-The final model is the one the simulator uses in step 4.
+The final model (Part 5's polynomial OLS) is the one the simulator uses.
 
 | Part | Model / concept |
 |---|---|
@@ -92,35 +175,21 @@ The final model is the one the simulator uses in step 4.
 | 7 | **Ridge (L2)** and **Lasso (L1)** (feature selection) |
 | 8 | **k-fold cross-validation** + train/val/test split; data leakage |
 
-The RMSE numbers shown in the shorts are produced by `run.py` on the real data — never
-by hand.
+Every RMSE/R² number is produced by `uber run-arc` on the real data — never by hand.
 
-## Structure
-
-```
-data/raw/madrid_locations.csv   the map of Madrid points            (tracked)
-data/raw/ride_tiers.csv         the tier catalog + price parameters  (tracked)
-data/raw/drivers.csv            driver population: tenure, activity, home district (tracked)
-data/raw/rides.csv              the ride history / training data     (gitignored: millions of
-                                rows at full scale, regenerated from the seed)
-data/raw/ncr_ride_bookings.csv  Kaggle NCR source (empirical distractor distributions)
-data/sources/                   frozen upstream sources (Madrid callejero snapshot, barrios TopoJSON)
-data/processed/                 cleaned dataset and features
-uber/                           the code: data generation, models, evaluation, simulator
-output/                         numbers and charts for the shorts (out of git)
-run.py                          orchestrator: from raw data to each part's numbers
-```
-
-All four generated tables are written to `data/raw/`; the three small tables
-(`madrid_locations.csv`, `ride_tiers.csv`, `drivers.csv`) are committed, while the large
-`rides.csv` is gitignored and regenerated from the seed (`python -m uber.generate_data`).
-
-## Usage
+## Development
 
 ```bash
-python -m venv .venv && .venv/Scripts/activate   # Windows
-pip install -e .
-python -m uber.generate_data   # generate the four CSVs into data/raw/
-python run.py                  # train the models and print RMSE part by part
-python -m uber.simulator       # start the terminal simulator (A → B in Madrid)
+pip install -e ".[dev]"
+pytest -q                            # the full test suite
+ruff check . && ruff format --check .
+pyright                              # informational; a known pandas/numpy stub baseline is tolerated
 ```
+
+Tests never read the 1.2 GB `rides.csv`; they build small in-memory datasets, so the
+suite is fast and hermetic. See [CONTRIBUTING.md](CONTRIBUTING.md) for the test-first
+workflow and the dependency rule.
+
+## License
+
+Released under the [MIT License](LICENSE).
