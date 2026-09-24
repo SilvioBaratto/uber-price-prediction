@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from uber import generate_data, sampling
+from uber.datagen import generate_data, sampling
 from uber.domain import config
 from uber.infrastructure import ncr, repositories
 

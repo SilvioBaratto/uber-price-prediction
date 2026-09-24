@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from uber import generate_data
+from uber.datagen import generate_data
 from uber.domain import config
 from uber.infrastructure import paths, repositories
 

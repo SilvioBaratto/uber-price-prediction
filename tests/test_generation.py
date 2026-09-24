@@ -21,7 +21,7 @@ import pandas as pd
 import pytest
 from sklearn.linear_model import LinearRegression
 
-from uber import generate_data, sampling, simulation
+from uber.datagen import generate_data, sampling, simulation
 from uber.domain import config, pricing
 from uber.infrastructure import paths, repositories
 

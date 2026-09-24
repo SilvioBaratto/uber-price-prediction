@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from uber import sampling, simulation
+from uber.datagen import sampling, simulation
 from uber.domain import config
 from uber.infrastructure import repositories
 

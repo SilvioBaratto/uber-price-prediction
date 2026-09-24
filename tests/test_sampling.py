@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from uber import sampling
+from uber.datagen import sampling
 from uber.domain import config
 
 TIER_IDS = [t.tier for t in config.TIERS]

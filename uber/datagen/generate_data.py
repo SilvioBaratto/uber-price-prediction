@@ -1,4 +1,4 @@
-"""Orchestration + CLI entry point: ``python -m uber.generate_data``.
+"""Orchestration + CLI entry point: ``python -m uber.datagen.generate_data``.
 
 Writes the dataset CSVs into ``data/raw/``: ``madrid_locations.csv``, ``ride_tiers.csv``,
 ``drivers.csv`` and the signal-only ``rides.csv`` (distractors + ``commission_eur`` land in
@@ -15,7 +15,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from uber import sampling, simulation
+from uber.datagen import sampling, simulation
 from uber.domain import config, pricing
 from uber.infrastructure import csv_io, ncr, paths, repositories
 
