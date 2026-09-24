@@ -1,12 +1,15 @@
 """Pure domain dataclasses (no I/O).
 
-``Location``, ``RideTier`` and ``Driver`` are defined; ``Ride`` is represented directly as
-DataFrame columns in generation (see tasks/plan.md).
+``Location``, ``RideTier`` and ``Driver`` model the generated dataset; ``Ride`` is represented
+directly as DataFrame columns in generation (see tasks/plan.md). ``RideOption`` and
+``TripRequest`` are the quote value objects the simulator's application layer produces and
+consumes.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,3 +65,49 @@ class Driver:
     active_days: int        # days actually worked in 2024
     n_rides: int            # total rides produced in 2024
     driver_rating: float    # 1–5 rating (per-driver weak distractor)
+
+
+@dataclass(frozen=True, slots=True)
+class RideOption:
+    """One priced service tier offered for a trip (a row in the simulator's quote table).
+
+    A frozen value object produced by the application layer: ``price_eur`` is the model's
+    prediction for this tier on the requested trip and ``eta_min`` its estimated duration.
+    Ordering is by price so a quote can be presented cheapest-first (``sorted(options)``);
+    equality still compares every field.
+    """
+
+    tier: str          # tier id (uberx, green, ...); matches RideTier.tier
+    display_name: str  # on-screen name
+    price_eur: float   # model-predicted fare for this tier, in EUR (> 0)
+    eta_min: float     # estimated trip duration, in minutes (>= 0)
+    capacity: int      # passenger seats (>= 1)
+
+    def __post_init__(self) -> None:
+        if self.price_eur <= 0:
+            raise ValueError(f"price_eur must be positive, got {self.price_eur}")
+        if self.eta_min < 0:
+            raise ValueError(f"eta_min must be non-negative, got {self.eta_min}")
+        if self.capacity < 1:
+            raise ValueError(f"capacity must be at least 1, got {self.capacity}")
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, RideOption):
+            return NotImplemented
+        return self.price_eur < other.price_eur
+
+
+@dataclass(frozen=True, slots=True)
+class TripRequest:
+    """A request to price a trip: pick-up ``origin`` -> drop-off ``destination`` at ``when``.
+
+    A frozen value object handed to the ``QuoteService``; the two endpoints must differ.
+    """
+
+    origin: Location
+    destination: Location
+    when: datetime
+
+    def __post_init__(self) -> None:
+        if self.origin.location_id == self.destination.location_id:
+            raise ValueError("origin and destination must be different locations")
