@@ -86,15 +86,18 @@ class PartResult:
 
 
 # --- Data loading & splitting ----------------------------------------------
-def load_rides(path: Path | str = paths.RAW_DIR / paths.RIDES_CSV) -> pd.DataFrame:
+def load_rides(
+    path: Path | str = paths.RAW_DIR / paths.RIDES_CSV, *, max_rows: int | None = None
+) -> pd.DataFrame:
     """Read ``rides.csv`` once, keeping only the candidate features + target (the 5 IDs dropped).
 
     ``usecols`` drops ``ride_id/driver_id/timestamp/pickup_location_id/dropoff_location_id``;
     the result is re-ordered to ``CANDIDATE_FEATURES + [TARGET]`` (``read_csv`` returns file
-    order) with the declared dtypes.
+    order) with the declared dtypes. ``max_rows`` (used by the simulator's retrain-on-launch)
+    caps the read to the first N rows for responsiveness; ``None`` reads the whole file.
     """
     usecols = CANDIDATE_FEATURES + [TARGET]
-    frame = pd.read_csv(path, usecols=usecols, dtype=cast(Any, _DTYPES))
+    frame = pd.read_csv(path, usecols=usecols, dtype=cast(Any, _DTYPES), nrows=max_rows)
     return cast(pd.DataFrame, frame[usecols])
 
 
