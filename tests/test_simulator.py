@@ -92,3 +92,21 @@ def test_simulator_reports_unknown_location_and_recovers() -> None:
     text = "\n".join(out_lines).lower()
     assert "no match" in text or "not found" in text
     assert "tier" in text  # it still produced a quote after the bad entry
+
+
+def test_simulator_quit_at_dropoff_prints_no_table() -> None:
+    # resolve the pickup, then quit at the drop-off prompt -> no quote is produced
+    out_lines, run = _make(["Sol", "q"])
+    run()
+    text = "\n".join(out_lines)
+    assert "Puerta del Sol" in text  # the pickup did resolve
+    assert "€" not in text  # ...but no table, because the drop-off was abandoned
+
+
+def test_simulator_reports_unknown_id_and_recovers() -> None:
+    # an absent numeric id exercises the id-lookup KeyError path, then a valid id-pair recovers
+    out_lines, run = _make(["999999", "1", "2", "q"])
+    run()
+    text = "\n".join(out_lines)
+    assert "No match" in text
+    assert "Tier" in text  # recovered and quoted after the bad id

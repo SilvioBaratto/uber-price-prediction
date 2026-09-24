@@ -124,3 +124,26 @@ def test_quote_capacity_and_display_name_come_from_tier() -> None:
 def test_quote_rejects_identical_endpoints() -> None:
     with pytest.raises(ValueError):
         _service(RecordingPredictor()).quote(ORIGIN, ORIGIN, WHEN)
+
+
+class FixedClock:
+    def now(self) -> datetime:
+        return WHEN
+
+
+def test_quote_uses_injected_clock_when_time_omitted() -> None:
+    pred = RecordingPredictor()
+    service = QuoteService(FakeLocationRepo(), FakeTierRepo(), pred, FixedClock())
+    options = service.quote(ORIGIN, DEST)  # no `when` -> falls back to clock.now()
+    assert len(options) == len(TIERS)
+    frame = pred.last_frame
+    assert frame is not None
+    assert (frame["hour"] == WHEN.hour).all()
+    assert (frame["day_of_week"] == WHEN.weekday()).all()
+    assert (frame["month"] == WHEN.month).all()
+
+
+def test_quote_without_time_and_no_clock_raises() -> None:
+    service = QuoteService(FakeLocationRepo(), FakeTierRepo(), RecordingPredictor())  # clock=None
+    with pytest.raises(ValueError):
+        service.quote(ORIGIN, DEST)  # no `when`, no clock to fall back on
