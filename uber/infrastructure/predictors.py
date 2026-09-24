@@ -38,9 +38,15 @@ class ModelPredictor:
         *,
         max_rows: int | None = None,
         poly_degree: int = 2,
+        seed: int = config.SEED,
         rides: pd.DataFrame | None = None,
     ) -> None:
-        frame = rides if rides is not None else pipeline.load_rides(rides_path, max_rows=max_rows)
+        frame = rides if rides is not None else pipeline.load_rides(rides_path)
+        if max_rows is not None and len(frame) > max_rows:
+            # A seeded RANDOM sample, never the first N rows: rides.csv is sorted chronologically,
+            # so a head-slice would train on early-year months only (``month`` near-constant) and
+            # skew every quote. Sampling keeps the training slice representative.
+            frame = frame.sample(max_rows, random_state=seed).reset_index(drop=True)
         X, y = pipeline.make_xy(frame)
         self._model = pipeline.ols_pipeline(poly_degree=poly_degree).fit(X, y)
         self.n_train = int(len(frame))

@@ -21,6 +21,14 @@ from pathlib import Path
 from uber.infrastructure import paths
 
 
+def _positive_int(value: str) -> int:
+    """argparse type: a strictly positive integer (rejects 0 and negatives with a usage error)."""
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError(f"must be a positive integer, got {value}")
+    return number
+
+
 def _handle_generate_data(args: argparse.Namespace) -> int:
     from uber.datagen import generate_data
 
@@ -102,9 +110,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sim.add_argument(
         "--max-train-rows",
-        type=int,
+        type=_positive_int,
         default=None,
-        help="cap training rows for a faster launch (default: all rows)",
+        help="fit on a seeded random sample of at most this many rides for a faster launch "
+        "(default: all rows)",
     )
     sim.set_defaults(func=_handle_simulate)
 

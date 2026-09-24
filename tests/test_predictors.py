@@ -15,7 +15,11 @@ from uber.application.ports import PricePredictor
 from uber.datagen import generate_data, sampling
 from uber.domain import config, pricing
 from uber.infrastructure import repositories
-from uber.infrastructure.predictors import FormulaPredictor, ModelPredictor
+from uber.infrastructure.predictors import (
+    _MIN_FARE_FLOOR_EUR,
+    FormulaPredictor,
+    ModelPredictor,
+)
 
 PINNED = [
     "tier",
@@ -30,10 +34,16 @@ PINNED = [
 
 
 @pytest.fixture(scope="module")
-def rides() -> pd.DataFrame:
+def full_rides() -> pd.DataFrame:
+    """The full-year, chronologically-sorted rides frame (spans all 12 months)."""
     locations = repositories.build_locations_df()
     _drivers, rides = generate_data.build_dataset(sampling.make_rng(config.SEED), locations, 250)
-    return rides.sample(8000, random_state=config.SEED).reset_index(drop=True)
+    return rides
+
+
+@pytest.fixture(scope="module")
+def rides(full_rides: pd.DataFrame) -> pd.DataFrame:
+    return full_rides.sample(8000, random_state=config.SEED).reset_index(drop=True)
 
 
 # --- ModelPredictor --------------------------------------------------------
@@ -63,6 +73,58 @@ def test_model_predictor_max_rows_caps_training(rides: pd.DataFrame, tmp_path) -
     rides.to_csv(path, index=False)
     predictor = ModelPredictor(path, max_rows=1000)
     assert predictor.n_train == 1000
+
+
+def test_model_predictor_max_rows_samples_representatively(full_rides: pd.DataFrame) -> None:
+    # `full_rides` is chronological, so a head-slice cap would train on early months only.
+    # The true fare is month-independent, so a representative sample must price a given trip
+    # ~identically across months; a chronological head-slice would extrapolate wildly.
+    cap = min(6000, len(full_rides) // 2)
+    predictor = ModelPredictor(rides=full_rides, max_rows=cap, seed=config.SEED)
+    assert predictor.n_train == cap
+
+    def trip(month: int) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "tier": ["uberx"],
+                "pickup_district": ["Centro"],
+                "distance_km": [8.0],
+                "duration_min": [20.0],
+                "surge_multiplier": [1.2],
+                "hour": [19],
+                "day_of_week": [2],
+                "month": [month],
+            }
+        )
+
+    jan = float(predictor.predict(trip(1))[0])
+    jul = float(predictor.predict(trip(7))[0])
+    dec = float(predictor.predict(trip(12))[0])
+    # months barely move the true price; a representative fit keeps them within a couple of euros
+    assert abs(jul - jan) < 2.5
+    assert abs(dec - jan) < 2.5
+
+
+def test_model_predictor_floors_nonpositive_predictions(rides: pd.DataFrame) -> None:
+    predictor = ModelPredictor.from_frame(rides.iloc[:6000])
+    # a near-zero-distance trip drives the raw OLS below zero (extrapolation)
+    degenerate = pd.DataFrame(
+        {
+            "tier": ["uberx", "black"],
+            "pickup_district": ["Centro", "Centro"],
+            "distance_km": [0.0, 0.0],
+            "duration_min": [0.0, 0.0],
+            "surge_multiplier": [1.0, 1.0],
+            "hour": [3, 3],
+            "day_of_week": [2, 2],
+            "month": [1, 1],
+        }
+    )
+    raw = predictor._model.predict(degenerate)
+    assert (raw <= 0).any()  # precondition: the floor has real work to do here
+    preds = predictor.predict(degenerate)
+    assert (preds > 0).all()  # the floor keeps every fare positive (RideOption's invariant)
+    assert preds.min() == pytest.approx(_MIN_FARE_FLOOR_EUR)
 
 
 # --- FormulaPredictor ------------------------------------------------------

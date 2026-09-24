@@ -69,3 +69,16 @@ def test_python_m_uber_help_runs() -> None:
     assert result.returncode == 0
     assert "generate-data" in result.stdout
     assert "simulate" in result.stdout
+
+
+@pytest.mark.parametrize("bad", ["0", "-5"])
+def test_simulate_rejects_non_positive_max_train_rows(bad: str) -> None:
+    # a clean argparse usage error (exit code 2), not an opaque crash inside model training
+    with pytest.raises(SystemExit) as exc:
+        app.build_parser().parse_args(["simulate", "--max-train-rows", bad])
+    assert exc.value.code == 2
+
+
+def test_simulate_accepts_positive_max_train_rows() -> None:
+    args = app.build_parser().parse_args(["simulate", "--max-train-rows", "1000"])
+    assert args.max_train_rows == 1000
