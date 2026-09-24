@@ -141,8 +141,14 @@ class CsvTierRepository:
                 raise ValueError(f"{self._path} is missing columns: {sorted(missing)}")
             self._tiers = [
                 RideTier(
-                    str(t), str(dn), int(cap), float(bf),
-                    float(pk), float(pm), float(bk), float(mf),
+                    str(t),
+                    str(dn),
+                    int(cap),
+                    float(bf),
+                    float(pk),
+                    float(pm),
+                    float(bk),
+                    float(mf),
                 )
                 for t, dn, cap, bf, pk, pm, bk, mf in zip(
                     df["tier"],
