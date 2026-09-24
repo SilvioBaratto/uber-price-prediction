@@ -9,6 +9,13 @@ venv/
 .ipynb_checkpoints/
 *.egg-info/
 
+# test / tooling artifacts
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+
 # os
 .DS_Store
 Thumbs.db
@@ -21,7 +28,7 @@ SPEC.md
 tasks/
 
 # large generated ride log (SPEC Rev 2: full Madrid scale ~15k drivers => millions of
-# rows, hundreds of MB). Regenerable from the seed via `python -m uber.generate_data`,
-# so it is NOT committed. The small tables (locations, tiers, drivers) stay tracked.
+# rows, hundreds of MB). Regenerable from the seed via `uber generate-data`, so it is
+# NOT committed. The small tables (locations, tiers, drivers) stay tracked.
 data/raw/rides.csv
 data/raw/rides.csv.gz
