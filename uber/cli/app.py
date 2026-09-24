@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import Callable
 
 from uber.infrastructure import paths
 
@@ -34,21 +35,39 @@ def _handle_run_arc(args: argparse.Namespace) -> int:
     return 0
 
 
-def _handle_simulate(args: argparse.Namespace) -> int:
+def run_simulate(
+    rides_path: Path | str,
+    max_train_rows: int | None,
+    *,
+    locations_path: Path | None = None,
+    tiers_path: Path | None = None,
+    input_fn: Callable[[str], str] = input,
+    out: Callable[[str], None] = print,
+) -> int:
+    """Wire the simulate composition and run the loop (the testable seam behind ``simulate``).
+
+    Repositories default to the committed ``data/raw`` catalogs; the model is retrained on
+    launch from ``rides_path`` (optionally capped by ``max_train_rows``). ``input_fn``/``out`` are
+    injected so an end-to-end run can be driven and captured by tests.
+    """
     from uber.application.quoting import QuoteService
     from uber.cli.simulator import run_simulator
     from uber.infrastructure.clock import SystemClock
     from uber.infrastructure.predictors import ModelPredictor
     from uber.infrastructure.repositories import CsvLocationRepository, CsvTierRepository
 
-    locations = CsvLocationRepository()
-    tiers = CsvTierRepository()
-    print(f"Training the price model on {args.rides} (retrain-on-launch)...")
-    predictor = ModelPredictor(args.rides, max_rows=args.max_train_rows)
-    print(f"Model trained on {predictor.n_train:,} rides.\n")
+    locations = CsvLocationRepository(locations_path)
+    tiers = CsvTierRepository(tiers_path)
+    out(f"Training the price model on {rides_path} (retrain-on-launch)...")
+    predictor = ModelPredictor(rides_path, max_rows=max_train_rows)
+    out(f"Model trained on {predictor.n_train:,} rides.\n")
     service = QuoteService(locations, tiers, predictor, SystemClock())
-    run_simulator(service, locations)
+    run_simulator(service, locations, input_fn=input_fn, out=out)
     return 0
+
+
+def _handle_simulate(args: argparse.Namespace) -> int:
+    return run_simulate(args.rides, args.max_train_rows)
 
 
 def build_parser() -> argparse.ArgumentParser:
