@@ -11,9 +11,9 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from uber import generate_data, io, sampling
+from uber import generate_data, sampling
 from uber.domain import config, pricing
-from uber.infrastructure import paths
+from uber.infrastructure import paths, repositories
 
 N_LOCATIONS = 8655
 N_DRIVERS_TEST = 250  # emergent rides comfortably exceed 50k, but the suite stays fast
@@ -21,7 +21,7 @@ N_DRIVERS_TEST = 250  # emergent rides comfortably exceed 50k, but the suite sta
 
 @pytest.fixture(scope="module")
 def locations() -> pd.DataFrame:
-    return io.build_locations_df()
+    return repositories.build_locations_df()
 
 
 @pytest.fixture(scope="module")
@@ -170,5 +170,5 @@ def test_generate_writes_rides_and_drivers(tmp_path) -> None:
     drivers_out = tmp_path / paths.DRIVERS_CSV
     assert drivers_out.exists()
     drivers = pd.read_csv(drivers_out)
-    assert list(drivers.columns) == io.DRIVER_COLUMNS
+    assert list(drivers.columns) == repositories.DRIVER_COLUMNS
     assert len(drivers) == 40

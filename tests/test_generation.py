@@ -21,9 +21,9 @@ import pandas as pd
 import pytest
 from sklearn.linear_model import LinearRegression
 
-from uber import generate_data, io, sampling, simulation
+from uber import generate_data, sampling, simulation
 from uber.domain import config, pricing
-from uber.infrastructure import paths
+from uber.infrastructure import paths, repositories
 
 PINNED_NUMERIC = ["distance_km", "duration_min", "surge_multiplier", "hour", "day_of_week", "month"]
 PINNED_CATEGORICAL = ["tier", "pickup_district"]
@@ -40,7 +40,7 @@ DEC31 = np.datetime64("2024-12-31")
 # --- fixtures --------------------------------------------------------------
 @pytest.fixture(scope="module")
 def locations() -> pd.DataFrame:
-    return io.build_locations_df()
+    return repositories.build_locations_df()
 
 
 @pytest.fixture(scope="module")

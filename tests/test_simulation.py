@@ -11,8 +11,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from uber import io, sampling, simulation
+from uber import sampling, simulation
 from uber.domain import config
+from uber.infrastructure import repositories
 
 N = 3000  # enough for stable class-mix / stationarity checks, still fast
 YEAR_DAYS = 366  # 2024 is a leap year
@@ -22,7 +23,7 @@ DEC31 = np.datetime64("2024-12-31")
 
 @pytest.fixture(scope="module")
 def locations() -> pd.DataFrame:
-    return io.build_locations_df()
+    return repositories.build_locations_df()
 
 
 @pytest.fixture(scope="module")
@@ -32,7 +33,7 @@ def drivers(locations: pd.DataFrame) -> pd.DataFrame:
 
 # --- Task 3R.2: roster + tenure/churn -------------------------------------
 def test_roster_shape_and_keys(drivers: pd.DataFrame) -> None:
-    assert list(drivers.columns) == io.DRIVER_COLUMNS
+    assert list(drivers.columns) == repositories.DRIVER_COLUMNS
     assert len(drivers) == N
     assert drivers["driver_id"].tolist() == list(range(1, N + 1))
     assert drivers["driver_id"].is_unique

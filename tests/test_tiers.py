@@ -5,9 +5,9 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from uber import generate_data, io
+from uber import generate_data
 from uber.domain import config
-from uber.infrastructure import paths
+from uber.infrastructure import paths, repositories
 
 # Declared tier ids in increasing-price order (SPEC §2.2).
 EXPECTED_TIER_IDS = ["uberx", "green", "comfort", "xl", "black", "van"]
@@ -16,12 +16,12 @@ N_TIERS = len(EXPECTED_TIER_IDS)
 
 @pytest.fixture(scope="module")
 def tiers() -> pd.DataFrame:
-    return io.build_tiers_df()
+    return repositories.build_tiers_df()
 
 
 def test_tiers_columns_and_order(tiers: pd.DataFrame) -> None:
-    assert list(tiers.columns) == io.TIER_COLUMNS
-    assert io.TIER_COLUMNS == [
+    assert list(tiers.columns) == repositories.TIER_COLUMNS
+    assert repositories.TIER_COLUMNS == [
         "tier",
         "display_name",
         "capacity",
@@ -78,6 +78,6 @@ def test_generate_writes_tiers(tmp_path) -> None:
     out = tmp_path / paths.TIERS_CSV
     assert out.exists()
     reloaded = pd.read_csv(out)
-    assert list(reloaded.columns) == io.TIER_COLUMNS
+    assert list(reloaded.columns) == repositories.TIER_COLUMNS
     assert len(reloaded) == N_TIERS
     assert reloaded["tier"].tolist() == EXPECTED_TIER_IDS

@@ -15,9 +15,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from uber import io, sampling, simulation
+from uber import sampling, simulation
 from uber.domain import config, pricing
-from uber.infrastructure import paths
+from uber.infrastructure import csv_io, ncr, paths, repositories
 
 # Signal columns of SPEC §2.3 + the target ``price_eur`` (no distractors/commission yet).
 # ``driver_id`` is metadata / a weak distractor (SPEC §2.3): it is NOT part of the pinned OLS
@@ -197,7 +197,7 @@ def build_dataset(
     events, active_days, n_rides = simulation.simulate_ride_events(rng, drivers)
     drivers["active_days"] = active_days
     drivers["n_rides"] = n_rides
-    rides = build_rides_df(rng, locations, drivers, events, io.load_ncr())
+    rides = build_rides_df(rng, locations, drivers, events, ncr.load_ncr())
     return drivers, rides
 
 
@@ -206,18 +206,18 @@ def generate(out_dir: Path, seed: int = config.SEED, n_drivers: int = config.N_D
     out_dir.mkdir(parents=True, exist_ok=True)
     written: dict[str, int] = {}
 
-    locations = io.build_locations_df()
-    io.write_csv(locations, out_dir / paths.LOCATIONS_CSV)
+    locations = repositories.build_locations_df()
+    csv_io.write_csv(locations, out_dir / paths.LOCATIONS_CSV)
     written[paths.LOCATIONS_CSV] = len(locations)
 
-    tiers = io.build_tiers_df()
-    io.write_csv(tiers, out_dir / paths.TIERS_CSV)
+    tiers = repositories.build_tiers_df()
+    csv_io.write_csv(tiers, out_dir / paths.TIERS_CSV)
     written[paths.TIERS_CSV] = len(tiers)
 
     drivers, rides = build_dataset(sampling.make_rng(seed), locations, n_drivers)
-    io.write_csv(drivers, out_dir / paths.DRIVERS_CSV)
+    csv_io.write_csv(drivers, out_dir / paths.DRIVERS_CSV)
     written[paths.DRIVERS_CSV] = len(drivers)
-    io.write_csv(rides, out_dir / paths.RIDES_CSV)
+    csv_io.write_csv(rides, out_dir / paths.RIDES_CSV)
     written[paths.RIDES_CSV] = len(rides)
 
     return written

@@ -18,8 +18,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from uber import io
 from uber.domain import config
+from uber.infrastructure import repositories
 
 
 def _year_bounds() -> tuple[np.datetime64, int]:
@@ -39,7 +39,7 @@ def build_drivers(rng: np.random.Generator, n_drivers: int, locations: pd.DataFr
     """Build the year's driver roster (SPEC §2.6 steps 1–2), one row per driver.
 
     ``active_days`` / ``n_rides`` are placeholders (0) here — they are filled from the ride
-    simulation by :func:`simulate_ride_events`. Columns match :data:`io.DRIVER_COLUMNS`.
+    simulation by :func:`simulate_ride_events`. Columns match :data:`repositories.DRIVER_COLUMNS`.
     """
     n = int(n_drivers)
     year_start, year_days = _year_bounds()
@@ -84,7 +84,7 @@ def build_drivers(rng: np.random.Generator, n_drivers: int, locations: pd.DataFr
             "n_rides": np.zeros(n, dtype=np.int64),
             "driver_rating": rating,
         },
-        columns=io.DRIVER_COLUMNS,
+        columns=repositories.DRIVER_COLUMNS,
     )
 
 

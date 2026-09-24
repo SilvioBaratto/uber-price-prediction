@@ -14,8 +14,9 @@ import pandas as pd
 import pytest
 from sklearn.linear_model import LinearRegression
 
-from uber import generate_data, io, sampling
+from uber import generate_data, sampling
 from uber.domain import config
+from uber.infrastructure import repositories
 
 N_DRIVERS_TEST = 250  # ~100k emergent rides — enough for a stable in-sample R²
 PINNED_NUMERIC = ["distance_km", "duration_min", "surge_multiplier", "hour", "day_of_week", "month"]
@@ -23,7 +24,7 @@ PINNED_NUMERIC = ["distance_km", "duration_min", "surge_multiplier", "hour", "da
 
 @pytest.fixture(scope="module")
 def rides() -> pd.DataFrame:
-    locations = io.build_locations_df()
+    locations = repositories.build_locations_df()
     _drivers, rides = generate_data.build_dataset(sampling.make_rng(config.SEED), locations, N_DRIVERS_TEST)
     return rides
 

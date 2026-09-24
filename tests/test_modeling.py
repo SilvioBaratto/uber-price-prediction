@@ -15,15 +15,16 @@ import pandas as pd
 import pytest
 from sklearn.model_selection import train_test_split
 
-from uber import generate_data, io, modeling, sampling
+from uber import generate_data, modeling, sampling
 from uber.domain import config
+from uber.infrastructure import csv_io, repositories
 
 N_DRIVERS_TEST = 250  # ~107k emergent rides
 
 
 @pytest.fixture(scope="module")
 def rides() -> pd.DataFrame:
-    locations = io.build_locations_df()
+    locations = repositories.build_locations_df()
     _drivers, rides = generate_data.build_dataset(
         sampling.make_rng(config.SEED), locations, N_DRIVERS_TEST
     )
@@ -34,7 +35,7 @@ def rides() -> pd.DataFrame:
 def rides_csv(tmp_path_factory: pytest.TempPathFactory, rides: pd.DataFrame) -> str:
     """The fixture rides written to a CSV (all 19 columns incl. the 5 IDs) for ``load_rides``."""
     path = tmp_path_factory.mktemp("modeling") / "rides.csv"
-    io.write_csv(rides, path)
+    csv_io.write_csv(rides, path)
     return str(path)
 
 

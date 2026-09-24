@@ -13,8 +13,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from uber import generate_data, io, sampling
+from uber import generate_data, sampling
 from uber.domain import config
+from uber.infrastructure import ncr, repositories
 
 N_DRIVERS_TEST = 250  # ~100k emergent rides — enough for a stable correlation estimate
 
@@ -23,7 +24,7 @@ NUMERIC_DISTRACTORS = ["driver_rating", "customer_rating", "avg_vtat"]
 
 @pytest.fixture(scope="module")
 def dataset() -> tuple[pd.DataFrame, pd.DataFrame]:
-    locations = io.build_locations_df()
+    locations = repositories.build_locations_df()
     return generate_data.build_dataset(sampling.make_rng(config.SEED), locations, N_DRIVERS_TEST)
 
 
@@ -74,10 +75,10 @@ def test_payment_method_uncorrelated_with_price(rides: pd.DataFrame) -> None:
 
 # --- value ranges match the NCR empirical support --------------------------
 def test_distractor_values_match_ncr_support(rides: pd.DataFrame) -> None:
-    ncr = io.load_ncr()
-    assert set(rides["payment_method"]) <= set(ncr["payment_method"].tolist())
-    assert rides["customer_rating"].isin(np.unique(ncr["customer_rating"])).all()
-    assert rides["avg_vtat"].isin(np.unique(ncr["avg_vtat"])).all()
+    supports = ncr.load_ncr()
+    assert set(rides["payment_method"]) <= set(supports["payment_method"].tolist())
+    assert rides["customer_rating"].isin(np.unique(supports["customer_rating"])).all()
+    assert rides["avg_vtat"].isin(np.unique(supports["avg_vtat"])).all()
 
 
 # --- driver_rating: per-driver, joined onto rides --------------------------
@@ -96,11 +97,11 @@ def test_driver_rating_matches_roster(rides: pd.DataFrame, drivers: pd.DataFrame
     assert np.array_equal(rides["driver_rating"].to_numpy(), joined)
 
 
-# --- io.load_ncr / sampling.sample_empirical units -------------------------
+# --- ncr.load_ncr / sampling.sample_empirical units -------------------------
 def test_load_ncr_drops_nulls_per_column() -> None:
-    ncr = io.load_ncr()
-    assert set(ncr) == {"payment_method", "customer_rating", "avg_vtat"}
-    for values in ncr.values():
+    supports = ncr.load_ncr()
+    assert set(supports) == {"payment_method", "customer_rating", "avg_vtat"}
+    for values in supports.values():
         assert len(values) > 0
         assert not pd.isna(values).any()
 

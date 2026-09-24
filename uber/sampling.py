@@ -59,7 +59,7 @@ def sample_jitter(rng: np.random.Generator, n: int) -> np.ndarray:
 def sample_empirical(rng: np.random.Generator, values: np.ndarray, n: int) -> np.ndarray:
     """Draw ``n`` values with replacement from the empirical support ``values`` (seeded).
 
-    ``values`` is an already null-free 1-D array (see :func:`uber.io.load_ncr`); indices are
+    ``values`` is an already null-free 1-D array (see :func:`uber.infrastructure.ncr.load_ncr`); indices are
     drawn uniformly, so the output reproduces the input's empirical distribution. Used for the
     NCR-derived per-ride distractors (SPEC §2.3). Dtype (str or float) is preserved.
     """
