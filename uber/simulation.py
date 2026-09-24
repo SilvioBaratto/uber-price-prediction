@@ -18,7 +18,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from uber import config, io
+from uber import io
+from uber.domain import config
 
 
 def _year_bounds() -> tuple[np.datetime64, int]:

@@ -18,7 +18,8 @@ from sklearn.linear_model import Lasso, Ridge
 from sklearn.model_selection import KFold, cross_validate
 
 import run
-from uber import config, generate_data, io, modeling, sampling
+from uber import generate_data, io, modeling, sampling
+from uber.domain import config
 
 N_DRIVERS_TEST = 250  # ~107k emergent rides
 SEED = config.SEED

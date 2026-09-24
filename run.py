@@ -26,7 +26,9 @@ from sklearn.linear_model import Lasso, Ridge
 from sklearn.model_selection import KFold, cross_validate, train_test_split
 from sklearn.pipeline import Pipeline
 
-from uber import config, modeling
+from uber import modeling
+from uber.domain import config
+from uber.infrastructure import paths
 
 
 # --- CLI --------------------------------------------------------------------
@@ -34,7 +36,7 @@ def parse_cli(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse the five run.py flags (no ``--parts``/``--sample``/``--frac`` — fixed decisions)."""
     parser = argparse.ArgumentParser(description="Run the eight-part regression arc on rides.csv.")
     parser.add_argument(
-        "--rides", type=Path, default=config.RAW_DIR / config.RIDES_CSV,
+        "--rides", type=Path, default=paths.RAW_DIR / paths.RIDES_CSV,
         help="path to rides.csv (default: data/raw/rides.csv)",
     )
     parser.add_argument("--seed", type=int, default=config.SEED, help="random_state (default: 42)")

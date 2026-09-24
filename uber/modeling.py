@@ -28,7 +28,8 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardScaler
 
-from uber import config
+from uber.domain import config
+from uber.infrastructure import paths
 
 # --- Feature sets (single source of truth, SPEC Data Contract) -------------
 TARGET = "price_eur"
@@ -85,7 +86,7 @@ class PartResult:
 
 
 # --- Data loading & splitting ----------------------------------------------
-def load_rides(path: Path | str = config.RAW_DIR / config.RIDES_CSV) -> pd.DataFrame:
+def load_rides(path: Path | str = paths.RAW_DIR / paths.RIDES_CSV) -> pd.DataFrame:
     """Read ``rides.csv`` once, keeping only the candidate features + target (the 5 IDs dropped).
 
     ``usecols`` drops ``ride_id/driver_id/timestamp/pickup_location_id/dropoff_location_id``;

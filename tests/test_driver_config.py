@@ -10,8 +10,8 @@ from dataclasses import fields, is_dataclass
 
 import pytest
 
-from uber import config
-from uber.entities import Driver
+from uber.domain import config
+from uber.domain.entities import Driver
 
 EXPECTED_DRIVER_FIELDS = [
     "driver_id",

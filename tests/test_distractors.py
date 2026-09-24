@@ -13,7 +13,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from uber import config, generate_data, io, sampling
+from uber import generate_data, io, sampling
+from uber.domain import config
 
 N_DRIVERS_TEST = 250  # ~100k emergent rides — enough for a stable correlation estimate
 

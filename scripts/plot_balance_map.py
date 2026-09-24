@@ -21,7 +21,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 
-from uber import config
+from uber.infrastructure import paths
 
 # --- design tokens (dataviz skill, light mode) -----------------------------
 SURFACE = "#fcfcfb"   # chart surface (the whole frame)
@@ -53,11 +53,11 @@ def gini(x: np.ndarray) -> float:
 
 def actual_counts(n_loc: int) -> np.ndarray:
     """Per-location pickup counts from rides.csv (cached under .scratch for fast re-runs)."""
-    cache = config.PROJECT_ROOT / ".scratch" / "pickup_counts_by_location.npy"
+    cache = paths.PROJECT_ROOT / ".scratch" / "pickup_counts_by_location.npy"
     if cache.exists():
         return np.load(cache)
     counts = np.zeros(n_loc + 1, dtype=np.int64)  # 1-based ids
-    for ch in pd.read_csv(config.RAW_DIR / config.RIDES_CSV,
+    for ch in pd.read_csv(paths.RAW_DIR / paths.RIDES_CSV,
                           usecols=["pickup_location_id"], chunksize=2_000_000):
         np.add.at(counts, ch["pickup_location_id"].to_numpy(), 1)
     per_loc = counts[1:]
@@ -110,7 +110,7 @@ def render_map(lat, lon, rel, norm, mark_center, xlim, ylim, out_path):
 
 
 def main() -> None:
-    loc = pd.read_csv(config.RAW_DIR / config.LOCATIONS_CSV)
+    loc = pd.read_csv(paths.RAW_DIR / paths.LOCATIONS_CSV)
     lat = loc["lat"].to_numpy(); lon = loc["lon"].to_numpy()
     n_loc = len(loc)
 
@@ -123,7 +123,7 @@ def main() -> None:
     g_bal, g_unb = gini(per_loc), gini(unbal)
 
     norm = Normalize(vmin=0.0, vmax=VMAX)
-    out_dir = config.PROJECT_ROOT / "output"
+    out_dir = paths.PROJECT_ROOT / "output"
     xlim, ylim = square_window(lat, lon)       # same crop for both, so they line up
 
     render_map(lat, lon, rel_bal, norm, False, xlim, ylim, out_dir / "madrid_balanced.png")

@@ -15,7 +15,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from uber import config, io, pricing, sampling, simulation
+from uber import io, sampling, simulation
+from uber.domain import config, pricing
+from uber.infrastructure import paths
 
 # Signal columns of SPEC §2.3 + the target ``price_eur`` (no distractors/commission yet).
 # ``driver_id`` is metadata / a weak distractor (SPEC §2.3): it is NOT part of the pinned OLS
@@ -78,7 +80,7 @@ def build_rides_df(
     Fully vectorized (no per-ride Python loop): OD pairs — with a share of pickups biased into
     the driver's home district — tier, surge jitter and price noise are drawn from ``rng`` in a
     fixed order, then the per-ride physics reuse the canonical *array* functions in
-    :mod:`uber.pricing` (the documented ground truth) so the formula is never duplicated. The
+    :mod:`uber.domain.pricing` (the documented ground truth) so the formula is never duplicated. The
     weak distractors (SPEC §2.3) are added last: ``payment_method`` / ``customer_rating`` /
     ``avg_vtat`` are sampled from the NCR empirical supports in ``ncr`` (drawn *after* the signal
     draws so the signal columns stay byte-identical), and per-driver ``driver_rating`` is joined
@@ -205,18 +207,18 @@ def generate(out_dir: Path, seed: int = config.SEED, n_drivers: int = config.N_D
     written: dict[str, int] = {}
 
     locations = io.build_locations_df()
-    io.write_csv(locations, out_dir / config.LOCATIONS_CSV)
-    written[config.LOCATIONS_CSV] = len(locations)
+    io.write_csv(locations, out_dir / paths.LOCATIONS_CSV)
+    written[paths.LOCATIONS_CSV] = len(locations)
 
     tiers = io.build_tiers_df()
-    io.write_csv(tiers, out_dir / config.TIERS_CSV)
-    written[config.TIERS_CSV] = len(tiers)
+    io.write_csv(tiers, out_dir / paths.TIERS_CSV)
+    written[paths.TIERS_CSV] = len(tiers)
 
     drivers, rides = build_dataset(sampling.make_rng(seed), locations, n_drivers)
-    io.write_csv(drivers, out_dir / config.DRIVERS_CSV)
-    written[config.DRIVERS_CSV] = len(drivers)
-    io.write_csv(rides, out_dir / config.RIDES_CSV)
-    written[config.RIDES_CSV] = len(rides)
+    io.write_csv(drivers, out_dir / paths.DRIVERS_CSV)
+    written[paths.DRIVERS_CSV] = len(drivers)
+    io.write_csv(rides, out_dir / paths.RIDES_CSV)
+    written[paths.RIDES_CSV] = len(rides)
 
     return written
 
@@ -228,7 +230,7 @@ def main(argv: list[str] | None = None) -> None:
         "--n-drivers", type=int, default=config.N_DRIVERS,
         help="number of drivers to simulate; rides emerge from the simulation (default: %(default)s)",
     )
-    parser.add_argument("--out-dir", type=Path, default=config.RAW_DIR, help="output directory (default: data/raw)")
+    parser.add_argument("--out-dir", type=Path, default=paths.RAW_DIR, help="output directory (default: data/raw)")
     args = parser.parse_args(argv)
 
     written = generate(args.out_dir, seed=args.seed, n_drivers=args.n_drivers)

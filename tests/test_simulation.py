@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from uber import config, io, sampling, simulation
+from uber import io, sampling, simulation
+from uber.domain import config
 
 N = 3000  # enough for stable class-mix / stationarity checks, still fast
 YEAR_DAYS = 366  # 2024 is a leap year

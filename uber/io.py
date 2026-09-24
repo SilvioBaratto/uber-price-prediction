@@ -11,7 +11,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from uber import config
+from uber.domain import config
+from uber.infrastructure import paths
 
 LOCATION_COLUMNS = ["location_id", "street", "neighborhood", "district", "lat", "lon"]
 TIER_COLUMNS = [
@@ -45,10 +46,10 @@ def build_locations_df() -> pd.DataFrame:
     The table is a frozen snapshot built offline by ``scripts/extract_locations.py`` from the
     official callejero; reading it keeps generation deterministic and network-free.
     """
-    df = pd.read_csv(config.STREETS_SOURCE, encoding="utf-8")
+    df = pd.read_csv(paths.STREETS_SOURCE, encoding="utf-8")
     missing = set(LOCATION_COLUMNS) - set(df.columns)
     if missing:
-        raise ValueError(f"{config.STREETS_SOURCE} is missing columns: {sorted(missing)}")
+        raise ValueError(f"{paths.STREETS_SOURCE} is missing columns: {sorted(missing)}")
     return pd.DataFrame(df, columns=LOCATION_COLUMNS)
 
 
@@ -72,7 +73,7 @@ def load_ncr() -> dict[str, np.ndarray]:
     their full non-null support (they are sampled one at a time, so ragged lengths are fine).
     """
     src_columns = list(config.NCR_DISTRACTOR_COLUMNS.values())
-    df = pd.read_csv(config.NCR_PATH, na_values=["null"], usecols=src_columns)
+    df = pd.read_csv(paths.NCR_PATH, na_values=["null"], usecols=src_columns)
     return {
         ride_col: df[src_col].dropna().to_numpy()
         for ride_col, src_col in config.NCR_DISTRACTOR_COLUMNS.items()

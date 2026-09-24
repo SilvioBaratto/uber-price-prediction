@@ -5,7 +5,9 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from uber import config, generate_data, io
+from uber import generate_data, io
+from uber.domain import config
+from uber.infrastructure import paths
 
 N_STREETS = 8655   # official viales in the Madrid callejero snapshot
 N_BARRIOS = 131    # municipal barrios
@@ -85,8 +87,8 @@ def test_accents_preserved(locations: pd.DataFrame) -> None:
 
 def test_generate_writes_locations(tmp_path) -> None:
     written = generate_data.generate(tmp_path, n_drivers=5)  # tiny sim: this test only checks locations
-    assert written[config.LOCATIONS_CSV] == N_STREETS
-    out = tmp_path / config.LOCATIONS_CSV
+    assert written[paths.LOCATIONS_CSV] == N_STREETS
+    out = tmp_path / paths.LOCATIONS_CSV
     assert out.exists()
     reloaded = pd.read_csv(out)
     assert list(reloaded.columns) == io.LOCATION_COLUMNS

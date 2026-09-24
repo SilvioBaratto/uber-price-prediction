@@ -1,6 +1,6 @@
 """Unit tests for the pure pricing + geography functions (SPEC §2.4 / §2.5).
 
-No I/O: these exercise ``uber.pricing`` in isolation. dow uses datetime.weekday()
+No I/O: these exercise ``uber.domain.pricing`` in isolation. dow uses datetime.weekday()
 convention (0=Mon .. 6=Sun).
 """
 
@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from uber import config, pricing
+from uber.domain import config, pricing
 
 MON, TUE, WED, THU, FRI, SAT, SUN = range(7)
 

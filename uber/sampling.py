@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from uber import config
+from uber.domain import config
 
 
 def make_rng(seed: int) -> np.random.Generator:

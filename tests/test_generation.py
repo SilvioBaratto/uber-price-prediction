@@ -21,7 +21,9 @@ import pandas as pd
 import pytest
 from sklearn.linear_model import LinearRegression
 
-from uber import config, generate_data, io, pricing, sampling, simulation
+from uber import generate_data, io, sampling, simulation
+from uber.domain import config, pricing
+from uber.infrastructure import paths
 
 PINNED_NUMERIC = ["distance_km", "duration_min", "surge_multiplier", "hour", "day_of_week", "month"]
 PINNED_CATEGORICAL = ["tier", "pickup_district"]
@@ -76,7 +78,7 @@ def test_s5_1_reproducible_byte_identical(tmp_path) -> None:
     a, b = tmp_path / "a", tmp_path / "b"
     generate_data.generate(a, seed=config.SEED, n_drivers=40)
     generate_data.generate(b, seed=config.SEED, n_drivers=40)
-    for name in (config.LOCATIONS_CSV, config.TIERS_CSV, config.DRIVERS_CSV, config.RIDES_CSV):
+    for name in (paths.LOCATIONS_CSV, paths.TIERS_CSV, paths.DRIVERS_CSV, paths.RIDES_CSV):
         assert (a / name).read_bytes() == (b / name).read_bytes(), f"{name} not byte-identical"
 
 

@@ -5,7 +5,9 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from uber import config, generate_data, io
+from uber import generate_data, io
+from uber.domain import config
+from uber.infrastructure import paths
 
 # Declared tier ids in increasing-price order (SPEC §2.2).
 EXPECTED_TIER_IDS = ["uberx", "green", "comfort", "xl", "black", "van"]
@@ -72,8 +74,8 @@ def test_tiers_values_match_spec(tiers: pd.DataFrame) -> None:
 
 def test_generate_writes_tiers(tmp_path) -> None:
     written = generate_data.generate(tmp_path, n_drivers=5)  # tiny sim: this test only checks tiers
-    assert written[config.TIERS_CSV] == N_TIERS
-    out = tmp_path / config.TIERS_CSV
+    assert written[paths.TIERS_CSV] == N_TIERS
+    out = tmp_path / paths.TIERS_CSV
     assert out.exists()
     reloaded = pd.read_csv(out)
     assert list(reloaded.columns) == io.TIER_COLUMNS

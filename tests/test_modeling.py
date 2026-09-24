@@ -15,7 +15,8 @@ import pandas as pd
 import pytest
 from sklearn.model_selection import train_test_split
 
-from uber import config, generate_data, io, modeling, sampling
+from uber import generate_data, io, modeling, sampling
+from uber.domain import config
 
 N_DRIVERS_TEST = 250  # ~107k emergent rides
 

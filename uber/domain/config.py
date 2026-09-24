@@ -1,42 +1,23 @@
-"""Configuration constants for dataset generation.
+"""Business & simulation constants for the domain (no filesystem paths).
 
-Central place for paths, the RNG seed, dataset sizing, the tier tariffs, the pricing
-dynamics (speed-by-hour + surge demand profile) and the Madrid bounding box. Noise
-calibration is added here when Phase 3.4 lands (see SPEC.md and tasks/plan.md).
+Central place for the RNG seed, dataset sizing, the tier tariffs, the pricing dynamics
+(speed-by-hour + surge demand profile), the noise calibration and the Madrid bounding box.
+Filesystem paths and CSV filenames live in :mod:`uber.infrastructure.paths` so the domain
+stays free of I/O concerns.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
-from uber.entities import RideTier
-
-# --- Paths -----------------------------------------------------------------
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = PROJECT_ROOT / "data"
-RAW_DIR = DATA_DIR / "raw"          # generated CSVs live here (SPEC §2)
-SOURCES_DIR = DATA_DIR / "sources"  # committed upstream source files
-NCR_PATH = RAW_DIR / "ncr_ride_bookings.csv"
+from uber.domain.entities import RideTier
 
 # Per-ride distractor columns (SPEC §2.3): each is sampled with replacement from the empirical
-# distribution of the mapped NCR source column (``io.load_ncr`` / ``sampling.sample_empirical``).
+# distribution of the mapped NCR source column (``ncr.load_ncr`` / ``sampling.sample_empirical``).
 # ``driver_rating`` is NOT here — it is a per-driver attribute (drivers.csv) joined onto rides.
 NCR_DISTRACTOR_COLUMNS = {
     "payment_method": "Payment Method",
     "customer_rating": "Customer Rating",
     "avg_vtat": "Avg VTAT",
 }
-
-# Committed, frozen street-level location snapshot (built by scripts/extract_locations.py
-# from the official Madrid callejero; see data/sources/SOURCE.md). Generation reads this so
-# it stays offline and reproducible even though the upstream callejero updates daily.
-STREETS_SOURCE = SOURCES_DIR / "madrid_streets.csv"
-
-# Output CSV filenames (all written to RAW_DIR).
-LOCATIONS_CSV = "madrid_locations.csv"
-TIERS_CSV = "ride_tiers.csv"
-DRIVERS_CSV = "drivers.csv"
-RIDES_CSV = "rides.csv"
 
 # --- Reproducibility / sizing ---------------------------------------------
 SEED = 42

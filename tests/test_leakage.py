@@ -14,7 +14,8 @@ import pandas as pd
 import pytest
 from sklearn.linear_model import LinearRegression
 
-from uber import config, generate_data, io, sampling
+from uber import generate_data, io, sampling
+from uber.domain import config
 
 N_DRIVERS_TEST = 250  # ~100k emergent rides — enough for a stable in-sample R²
 PINNED_NUMERIC = ["distance_km", "duration_min", "surge_multiplier", "hour", "day_of_week", "month"]

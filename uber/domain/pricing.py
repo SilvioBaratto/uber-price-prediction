@@ -2,7 +2,7 @@
 
 Implements the documented ground-truth price formula (SPEC §2.4) and the temporal demand
 profile (SPEC §2.5) — the "answer" the ML models must reconstruct. Every function is pure;
-tunable constants live in ``uber.config``. ``dow`` follows ``datetime.weekday()``:
+tunable constants live in ``uber.domain.config``. ``dow`` follows ``datetime.weekday()``:
 0=Mon .. 6=Sun.
 """
 
@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from uber import config
-from uber.entities import RideTier
+from uber.domain import config
+from uber.domain.entities import RideTier
 
 # Mean Earth radius (km) — the haversine reference sphere (WGS84 mean radius).
 EARTH_RADIUS_KM = 6371.0088

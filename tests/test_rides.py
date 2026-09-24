@@ -11,7 +11,9 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from uber import config, generate_data, io, pricing, sampling
+from uber import generate_data, io, sampling
+from uber.domain import config, pricing
+from uber.infrastructure import paths
 
 N_LOCATIONS = 8655
 N_DRIVERS_TEST = 250  # emergent rides comfortably exceed 50k, but the suite stays fast
@@ -151,21 +153,21 @@ def test_reproducible_byte_identical_csvs(tmp_path) -> None:
     a, b = tmp_path / "a", tmp_path / "b"
     generate_data.generate(a, seed=config.SEED, n_drivers=40)
     generate_data.generate(b, seed=config.SEED, n_drivers=40)
-    assert (a / config.RIDES_CSV).read_bytes() == (b / config.RIDES_CSV).read_bytes()
-    assert (a / config.DRIVERS_CSV).read_bytes() == (b / config.DRIVERS_CSV).read_bytes()
+    assert (a / paths.RIDES_CSV).read_bytes() == (b / paths.RIDES_CSV).read_bytes()
+    assert (a / paths.DRIVERS_CSV).read_bytes() == (b / paths.DRIVERS_CSV).read_bytes()
 
 
 def test_generate_writes_rides_and_drivers(tmp_path) -> None:
     written = generate_data.generate(tmp_path, seed=config.SEED, n_drivers=40)
-    assert written[config.DRIVERS_CSV] == 40
+    assert written[paths.DRIVERS_CSV] == 40
 
-    rides_out = tmp_path / config.RIDES_CSV
+    rides_out = tmp_path / paths.RIDES_CSV
     assert rides_out.exists()
     reloaded = pd.read_csv(rides_out)
     assert list(reloaded.columns) == generate_data.RIDE_COLUMNS
-    assert len(reloaded) == written[config.RIDES_CSV]
+    assert len(reloaded) == written[paths.RIDES_CSV]
 
-    drivers_out = tmp_path / config.DRIVERS_CSV
+    drivers_out = tmp_path / paths.DRIVERS_CSV
     assert drivers_out.exists()
     drivers = pd.read_csv(drivers_out)
     assert list(drivers.columns) == io.DRIVER_COLUMNS
