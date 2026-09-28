@@ -1,8 +1,8 @@
-"""Empirical distractor columns (SPEC §2.3, Task 4.1).
+"""Empirical distractor columns.
 
 ``payment_method`` / ``customer_rating`` / ``avg_vtat`` are sampled with replacement from
-the NCR empirical distributions; ``driver_rating`` is a per-driver attribute (drivers.csv,
-Phase 3R) joined onto each ride so it is constant within a driver. All four are *weak*
+the NCR empirical distributions; ``driver_rating`` is a per-driver attribute (drivers.csv)
+joined onto each ride so it is constant within a driver. All four are *weak*
 features — true coefficient 0 — so their |Pearson r| with ``price_eur`` is < 0.05 and no
 nulls are introduced. Run with ``pytest -k distractor``.
 """

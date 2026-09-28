@@ -1,4 +1,4 @@
-"""T2.4 — CSV-backed repository adapters (infrastructure layer).
+"""CSV-backed repository adapters (infrastructure layer).
 
 CsvLocationRepository and CsvTierRepository implement the application ports over the committed
 ``data/raw/madrid_locations.csv`` and ``data/raw/ride_tiers.csv``, returning domain entities.

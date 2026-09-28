@@ -1,4 +1,4 @@
-"""Validation for the ride-tier catalog (ride_tiers.csv), SPEC §2.2."""
+"""Validation for the ride-tier catalog (ride_tiers.csv)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import pytest
 from uber.datagen import generate_data
 from uber.infrastructure import paths, repositories
 
-# Declared tier ids in increasing-price order (SPEC §2.2).
+# Declared tier ids in increasing-price order.
 EXPECTED_TIER_IDS = ["uberx", "green", "comfort", "xl", "black", "van"]
 N_TIERS = len(EXPECTED_TIER_IDS)
 

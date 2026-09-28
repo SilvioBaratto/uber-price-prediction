@@ -30,7 +30,7 @@ class Location:
 
 @dataclass(frozen=True, slots=True)
 class RideTier:
-    """A service tier and its fare parameters (SPEC §2.2).
+    """A service tier and its fare parameters.
 
     Tariffs are plausible but invented (EUR, distances in km, time in minutes). The
     catalog in ``config.TIERS`` lists the tiers in increasing-price order. Field order
@@ -49,7 +49,7 @@ class RideTier:
 
 @dataclass(frozen=True, slots=True)
 class Driver:
-    """A simulated driver in the year's roster (SPEC §2.1b / §2.6, Rev 2).
+    """A simulated driver in the year's roster.
 
     All attributes are **per-driver** (constant across that driver's rides) and none enter
     the price formula — ``driver_id`` is metadata / a weak distractor. ``tenure_start`` and

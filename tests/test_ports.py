@@ -1,4 +1,4 @@
-"""T2.2 — the application ports (interfaces the use cases depend on).
+"""The application ports (interfaces the use cases depend on).
 
 The ports are ``@runtime_checkable`` Protocols so a concrete adapter (or a test fake) is
 recognised structurally: any object with the right methods satisfies ``isinstance``. This keeps

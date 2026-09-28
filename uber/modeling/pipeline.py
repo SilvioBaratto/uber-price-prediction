@@ -31,7 +31,7 @@ from sklearn.preprocessing import OneHotEncoder, PolynomialFeatures, StandardSca
 from uber.domain import config
 from uber.infrastructure import paths
 
-# --- Feature sets (single source of truth, SPEC Data Contract) -------------
+# --- Feature sets (single source of truth, the data contract) -------------
 TARGET = "price_eur"
 EXCLUDED_IDS = ["ride_id", "driver_id", "timestamp", "pickup_location_id", "dropoff_location_id"]
 PINNED_NUMERIC = ["distance_km", "duration_min", "surge_multiplier", "hour", "day_of_week", "month"]
@@ -206,9 +206,44 @@ def ols_pipeline(
     poly_degree: int | None = None,
     dense: bool = True,
 ) -> Pipeline:
-    """OLS (``LinearRegression``) pipeline; dense design for exact coefficient inference."""
+    """OLS (``LinearRegression``) pipeline; dense design for exact coefficient inference.
+
+    Note the polynomial (when ``poly_degree`` is set) lives *inside* the numeric branch of
+    :func:`build_preprocessor`, so it never crosses the one-hot ``tier``/``pickup_district``
+    columns — each category only shifts the intercept. This is the arc's teaching model (Parts
+    4-8). For per-tier *slopes* (production quoting) use :func:`interaction_ols_pipeline`.
+    """
     return make_pipeline(
         LinearRegression(), numeric, categorical, poly_degree=poly_degree, dense=dense
+    )
+
+
+def interaction_ols_pipeline(
+    numeric: list[str] = PINNED_NUMERIC,
+    categorical: list[str] = PINNED_CATEGORICAL,
+    *,
+    poly_degree: int = 2,
+) -> Pipeline:
+    """Tier-AWARE poly-OLS: ``PolynomialFeatures`` runs *after* one-hot, over the full design.
+
+    Unlike :func:`ols_pipeline` (whose polynomial sits inside the numeric-only branch and so only
+    shifts each category's intercept), this expands the polynomial across the concatenated
+    ``[scaled numeric | one-hot categorical]`` matrix. Degree-2 therefore forms
+    ``tier × distance``/``tier × duration``/``tier × surge`` (and ``surge × distance`` …) terms,
+    giving every tier its **own slopes** — which is what the ground-truth per-tier tariff needs.
+
+    This is the production quoting model (:class:`~uber.infrastructure.predictors.ModelPredictor`),
+    kept separate from the arc so the teaching narrative and :func:`ols_pipeline` stay unchanged.
+    The wider design (~500 columns from degree-2 over the one-hot block) is dense, so cap the
+    training rows for very large datasets.
+    """
+    pre = build_preprocessor(numeric, categorical, scale=True, poly_degree=None, dense=True)
+    return Pipeline(
+        [
+            ("pre", pre),
+            ("poly", PolynomialFeatures(degree=poly_degree, include_bias=False)),
+            ("est", LinearRegression()),
+        ]
     )
 
 

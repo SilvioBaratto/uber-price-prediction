@@ -17,7 +17,7 @@ from uber.application.ports import Clock, LocationRepository, PricePredictor, Ti
 from uber.domain import pricing
 from uber.domain.entities import Location, RideOption, TripRequest
 
-# The pinned model feature columns the predictor consumes (SPEC data contract). Kept here because
+# The pinned feature columns the predictor consumes (the model's data contract). Kept here because
 # producing this row is the use case's responsibility; the concrete predictor selects by name.
 FEATURE_COLUMNS = [
     "tier",

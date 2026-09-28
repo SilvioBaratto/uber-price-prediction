@@ -1,7 +1,7 @@
 """Unit tests for seeded sampling (no filesystem I/O).
 
 Determinism (same seed => identical arrays) and coverage (all tiers / all 12 months /
-distinct in-range OD pairs) per Task 3.2.
+distinct in-range OD pairs).
 """
 
 from __future__ import annotations
@@ -60,7 +60,7 @@ def test_od_pairs_in_range_and_distinct() -> None:
 
 
 def test_od_pairs_distinct_on_tiny_map() -> None:
-    # Even with only 2 locations, pickup != dropoff must hold (R4 zero-distance guard).
+    # Even with only 2 locations, pickup != dropoff must hold (zero-distance guard).
     pickup, dropoff = sampling.sample_od_pairs(sampling.make_rng(config.SEED), 500, 2)
     assert set(np.unique(pickup).tolist()) <= {1, 2}
     assert (pickup != dropoff).all()

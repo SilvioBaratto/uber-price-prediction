@@ -1,4 +1,4 @@
-"""T2.5 — the price predictors (infrastructure layer).
+"""The price predictors (infrastructure layer).
 
 ``ModelPredictor`` retrains a pinned poly-OLS model on launch from rides data and predicts fares
 for a quote's feature frame; ``FormulaPredictor`` is a ground-truth test double / no-data
@@ -7,6 +7,7 @@ fallback built on ``domain.pricing.price``. Both satisfy the ``PricePredictor`` 
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 import pytest
 from sklearn.metrics import r2_score
@@ -105,26 +106,110 @@ def test_model_predictor_max_rows_samples_representatively(full_rides: pd.DataFr
     assert abs(dec - jan) < 2.5
 
 
-def test_model_predictor_floors_nonpositive_predictions(rides: pd.DataFrame) -> None:
+def test_model_predictor_save_load_round_trips(rides: pd.DataFrame, tmp_path) -> None:
+    # train once, persist, reload: the reloaded predictor must be identical (no refitting)
+    trained = ModelPredictor.from_frame(rides.iloc[:6000])
+    dest = tmp_path / "models" / "price_model.joblib"
+    saved = trained.save(dest)
+    assert saved == dest and dest.exists()  # save() creates the dir and returns the path
+
+    reloaded = ModelPredictor.load(dest)
+    assert isinstance(reloaded, PricePredictor)
+    assert reloaded.n_train == trained.n_train
+
+    holdout = rides.iloc[6000:][PINNED]
+    # identical inputs -> byte-identical predictions from the deserialized model
+    assert (reloaded.predict(holdout) == trained.predict(holdout)).all()
+
+
+def test_model_predictor_load_does_not_refit(rides: pd.DataFrame, tmp_path, monkeypatch) -> None:
+    # loading weights must never call the fitting pipeline (that's the whole point of persistence)
+    dest = tmp_path / "price_model.joblib"
+    ModelPredictor.from_frame(rides.iloc[:4000]).save(dest)
+
+    from uber.infrastructure import predictors as predictors_mod
+
+    def _boom(*_args, **_kwargs):  # pragma: no cover - only runs on regression
+        raise AssertionError("load() must not fit a new pipeline")
+
+    # patch the function the fit path actually calls (interaction_ols_pipeline), not ols_pipeline
+    monkeypatch.setattr(predictors_mod.pipeline, "interaction_ols_pipeline", _boom)
+    reloaded = ModelPredictor.load(dest)  # would raise if it tried to refit
+    assert reloaded.n_train == 4000
+
+
+def test_model_predictor_clamps_each_quote_to_its_tier_min_fare(rides: pd.DataFrame) -> None:
     predictor = ModelPredictor.from_frame(rides.iloc[:6000])
-    # a near-zero-distance trip drives the raw OLS below zero (extrapolation)
-    degenerate = pd.DataFrame(
+    min_fare = {t.tier: t.min_fare for t in config.TIERS}
+    # a near-zero-distance trip: the raw model can dip below the floor, but every QUOTE must land at
+    # (or above) that tier's guaranteed minimum — the serve-time analogue of max(min_fare, …). The
+    # OLD behaviour floored to a generic €0.01 (the visible bug); now it floors PER TIER.
+    short = pd.DataFrame(
         {
             "tier": ["uberx", "black"],
             "pickup_district": ["Centro", "Centro"],
-            "distance_km": [0.0, 0.0],
-            "duration_min": [0.0, 0.0],
+            "distance_km": [0.1, 0.1],
+            "duration_min": [0.5, 0.5],
             "surge_multiplier": [1.0, 1.0],
             "hour": [3, 3],
             "day_of_week": [2, 2],
             "month": [1, 1],
         }
     )
-    raw = predictor._model.predict(degenerate)
-    assert (raw <= 0).any()  # precondition: the floor has real work to do here
-    preds = predictor.predict(degenerate)
-    assert (preds > 0).all()  # the floor keeps every fare positive (RideOption's invariant)
-    assert preds.min() == pytest.approx(_MIN_FARE_FLOOR_EUR)
+    raw = predictor._model.predict(short)
+    floors = np.array([min_fare["uberx"], min_fare["black"]])
+    preds = predictor.predict(short)
+    # precondition: raw dips below the floor here, so the clamp does real work (not tautological)
+    assert (raw < floors).any()
+    # the clamp only ever raises to the floor, never lowers a valid fare
+    assert np.allclose(preds, np.maximum(raw, floors))
+    assert preds[0] >= min_fare["uberx"]  # >= €5.00, not the old generic €0.01
+    assert preds[1] >= min_fare["black"]  # >= €12.00
+
+
+def test_model_predictor_never_quotes_below_min_fare_for_any_tier(rides: pd.DataFrame) -> None:
+    predictor = ModelPredictor.from_frame(rides.iloc[:6000])
+    min_fare = {t.tier: t.min_fare for t in config.TIERS}
+    tiers = list(min_fare)
+    # a very short trip across ALL tiers at once: the floor-violation rate must be exactly zero
+    frame = pd.DataFrame(
+        {
+            "tier": tiers,
+            "pickup_district": ["Centro"] * len(tiers),
+            "distance_km": [0.2] * len(tiers),
+            "duration_min": [0.8] * len(tiers),
+            "surge_multiplier": [1.0] * len(tiers),
+            "hour": [4] * len(tiers),
+            "day_of_week": [1] * len(tiers),
+            "month": [6] * len(tiers),
+        }
+    )
+    raw = predictor._model.predict(frame)
+    floors = np.array([min_fare[t] for t in tiers])
+    preds = predictor.predict(frame)
+    assert (raw < floors).any()  # precondition: at least one tier's raw dips below its floor
+    assert (preds >= floors).all()  # every quote lands at or above its tier's min_fare
+    assert np.allclose(preds, np.maximum(raw, floors))
+
+
+def test_model_predictor_unknown_tier_falls_back_to_positivity_floor(rides: pd.DataFrame) -> None:
+    predictor = ModelPredictor.from_frame(rides.iloc[:6000])
+    # a tier absent from the catalog must not crash or return NaN; it floors to _MIN_FARE_FLOOR_EUR
+    frame = pd.DataFrame(
+        {
+            "tier": ["mystery"],
+            "pickup_district": ["Centro"],
+            "distance_km": [5.0],
+            "duration_min": [15.0],
+            "surge_multiplier": [1.2],
+            "hour": [19],
+            "day_of_week": [5],
+            "month": [6],
+        }
+    )
+    preds = predictor.predict(frame)
+    assert np.isfinite(preds).all()
+    assert (preds >= _MIN_FARE_FLOOR_EUR).all()
 
 
 # --- FormulaPredictor ------------------------------------------------------

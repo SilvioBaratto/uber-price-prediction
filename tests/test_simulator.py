@@ -1,4 +1,4 @@
-"""T2.7 — the interactive terminal simulator loop (presentation layer).
+"""The interactive terminal simulator loop (presentation layer).
 
 ``run_simulator`` prompts for a pickup then a drop-off (by street name or id), quotes the trip
 through the injected QuoteService and prints the rendered table, looping until the user quits.

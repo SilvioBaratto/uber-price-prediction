@@ -20,7 +20,7 @@ def load_ncr() -> dict[str, np.ndarray]:
     Reads ``paths.NCR_PATH`` (the Kaggle "NCR ride bookings" dump), parsing its literal
     ``null`` tokens as missing values, and returns ``{ride_column: values}`` for each per-ride
     distractor in ``config.NCR_DISTRACTOR_COLUMNS``. Each column's NaNs are dropped
-    *independently* (R3) so ``sampling.sample_empirical`` can never draw a null; columns keep
+    *independently* so ``sampling.sample_empirical`` can never draw a null; columns keep
     their full non-null support (they are sampled one at a time, so ragged lengths are fine).
     """
     src_columns = list(config.NCR_DISTRACTOR_COLUMNS.values())

@@ -1,8 +1,8 @@
 """Seeded random sampling for ride generation (no filesystem I/O).
 
 All randomness flows through a single seeded ``numpy.random.Generator`` so generation is
-reproducible (SPEC §6): the same seed yields identical arrays. Functions receive the
-generator and already-loaded sizes/arrays (A2) and return numpy arrays; calendar fields
+reproducible: the same seed yields identical arrays. Functions receive the
+generator and already-loaded sizes/arrays and return numpy arrays; calendar fields
 (hour / day-of-week / month) are derived downstream from the sampled timestamps.
 """
 
@@ -38,7 +38,7 @@ def sample_od_pairs(
 
     ``pickup`` is uniform over ``[1, n_locations]``; ``dropoff`` is pickup shifted by a
     non-zero offset (mod ``n_locations``), which guarantees ``pickup != dropoff`` without a
-    rejection loop and keeps dropoff marginally uniform (R4 zero-distance guard).
+    rejection loop and keeps dropoff marginally uniform (zero-distance guard).
     """
     pickup = rng.integers(1, n_locations + 1, size=n, dtype=np.int64)
     offset = rng.integers(1, n_locations, size=n, dtype=np.int64)  # 1 .. n_locations-1
@@ -62,7 +62,7 @@ def sample_empirical(rng: np.random.Generator, values: np.ndarray, n: int) -> np
     ``values`` is an already null-free 1-D array (see
     :func:`uber.infrastructure.ncr.load_ncr`); indices are
     drawn uniformly, so the output reproduces the input's empirical distribution. Used for the
-    NCR-derived per-ride distractors (SPEC §2.3). Dtype (str or float) is preserved.
+    NCR-derived per-ride distractors. Dtype (str or float) is preserved.
     """
     arr = np.asarray(values)
     if arr.size == 0:

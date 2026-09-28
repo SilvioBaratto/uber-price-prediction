@@ -55,7 +55,7 @@ def test_feature_set_shapes() -> None:
         config.R2_BAND,
         config.NOISE_STD,
     )
-    assert 10 in modeling.K_GRID_TUNE  # the SPEC-anchored good k is a candidate
+    assert 10 in modeling.K_GRID_TUNE  # a known-good k is a candidate
 
 
 # --- load_rides -------------------------------------------------------------
@@ -151,6 +151,24 @@ def test_score_matches_component_metrics(rides: pd.DataFrame) -> None:
     rmse_v, r2_v = modeling.score(model, split.X_test, split.y_test)
     assert rmse_v == pytest.approx(modeling.rmse(split.y_test, model.predict(split.X_test)))
     assert r2_v == pytest.approx(modeling.r2(split.y_test, model.predict(split.X_test)))
+
+
+# --- interaction_ols_pipeline (the production quoting model) -----------------
+def test_interaction_pipeline_beats_numeric_only_poly(rides: pd.DataFrame) -> None:
+    """Running the polynomial over the one-hot design (tier×feature interactions) recovers per-tier
+    slopes, so it materially outscores the arc's numeric-only degree-2 poly on held-out data."""
+    split = modeling.make_split(rides)
+    base = modeling.ols_pipeline(poly_degree=2).fit(split.X_train, split.y_train)
+    inter = modeling.interaction_ols_pipeline(poly_degree=2).fit(split.X_train, split.y_train)
+    _, r2_base = modeling.score(base, split.X_test, split.y_test)
+    _, r2_inter = modeling.score(inter, split.X_test, split.y_test)
+    assert r2_inter > r2_base + 0.02  # per-tier slopes add real signal (empirically ~0.88 -> ~0.98)
+    # structural proof the tier/district one-hot entered the polynomial: the design fed to the
+    # estimator is far wider than the numeric-only degree-2 poly (52 columns).
+    n_base = base.named_steps["est"].coef_.shape[0]
+    n_inter = inter.named_steps["est"].coef_.shape[0]
+    assert n_base == 52
+    assert n_inter > n_base
 
 
 # --- ols_coef_table ---------------------------------------------------------

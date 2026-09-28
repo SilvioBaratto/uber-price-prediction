@@ -13,8 +13,9 @@ from pathlib import Path
 # paths.py lives at uber/infrastructure/paths.py, so the project root is two levels up.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT_ROOT / "data"
-RAW_DIR = DATA_DIR / "raw"  # generated CSVs live here (SPEC §2)
+RAW_DIR = DATA_DIR / "raw"  # generated CSVs live here
 SOURCES_DIR = DATA_DIR / "sources"  # committed upstream source files
+MODELS_DIR = PROJECT_ROOT / "models"  # persisted model weights (committed; see `uber train`)
 
 # --- Source files (committed) ----------------------------------------------
 NCR_PATH = RAW_DIR / "ncr_ride_bookings.csv"
@@ -27,3 +28,6 @@ LOCATIONS_CSV = "madrid_locations.csv"
 TIERS_CSV = "ride_tiers.csv"
 DRIVERS_CSV = "drivers.csv"
 RIDES_CSV = "rides.csv"
+
+# --- Persisted model weights (written to MODELS_DIR by `uber train`) --------
+MODEL_JOBLIB = "price_model.joblib"

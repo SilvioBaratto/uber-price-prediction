@@ -1,4 +1,4 @@
-"""Data-leakage trap: ``commission_eur`` (SPEC §2.3 / §5.8, Task 4.2).
+"""Data-leakage trap: ``commission_eur``.
 
 ``commission_eur = COMMISSION_RATE × price_eur + negligible noise`` is derived straight from
 the target, so it is *excluded* from the signal formula and the pinned OLS feature set.

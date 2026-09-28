@@ -1,4 +1,4 @@
-"""Day-by-day driver-population simulation (SPEC §2.6, Rev 2).
+"""Day-by-day driver-population simulation.
 
 Two pure, fully-vectorized steps (no per-ride Python loops — the shipped default is 15k
 drivers ⇒ millions of rides, so every array op stays in numpy):
@@ -38,7 +38,7 @@ def _normalized(weights: tuple[float, ...]) -> np.ndarray:
 def build_drivers(
     rng: np.random.Generator, n_drivers: int, locations: pd.DataFrame
 ) -> pd.DataFrame:
-    """Build the year's driver roster (SPEC §2.6 steps 1–2), one row per driver.
+    """Build the year's driver roster, one row per driver.
 
     ``active_days`` / ``n_rides`` are placeholders (0) here — they are filled from the ride
     simulation by :func:`simulate_ride_events`. Columns match :data:`repositories.DRIVER_COLUMNS`.
@@ -95,7 +95,7 @@ def build_drivers(
 
 
 def _hour_cdf_table() -> np.ndarray:
-    """Per-day-of-week (7×24) CDF of ride volume over the hour of day (SPEC §2.6 step 4).
+    """Per-day-of-week (7×24) CDF of ride volume over the hour of day.
 
     Weekdays use the weekday profile, Sat/Sun the weekend one; Fri & Sat nights (21–03) get an
     extra volume boost. Each row is normalized to end at 1.0 so it can be sampled by inversion.
@@ -114,7 +114,7 @@ def _hour_cdf_table() -> np.ndarray:
 def simulate_ride_events(
     rng: np.random.Generator, drivers: pd.DataFrame
 ) -> tuple[pd.DataFrame, np.ndarray, np.ndarray]:
-    """Simulate every ride each driver gives across their tenure (SPEC §2.6 steps 3–4).
+    """Simulate every ride each driver gives across their tenure.
 
     Returns ``(events, active_days, n_rides)`` where ``events`` has columns ``driver_id`` and
     ``timestamp`` (second resolution, in driver/day order — the caller sorts chronologically),

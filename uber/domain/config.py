@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from uber.domain.entities import RideTier
 
-# Per-ride distractor columns (SPEC §2.3): each is sampled with replacement from the empirical
+# Per-ride distractor columns: each is sampled with replacement from the empirical
 # distribution of the mapped NCR source column (``ncr.load_ncr`` / ``sampling.sample_empirical``).
 # ``driver_rating`` is NOT here — it is a per-driver attribute (drivers.csv) joined onto rides.
 NCR_DISTRACTOR_COLUMNS = {
@@ -23,16 +23,16 @@ NCR_DISTRACTOR_COLUMNS = {
 SEED = 42
 YEAR = 2024
 
-# Rev 2: the ride count is EMERGENT from the driver simulation (§2.6). ``N_DRIVERS`` is the
+# The ride count is EMERGENT from the driver simulation. ``N_DRIVERS`` is the
 # sizing knob (CLI ``--n-drivers``); the default is Madrid's full operating scale, which
 # yields millions of rides (so ``rides.csv`` is gitignored / regenerated on demand).
 N_DRIVERS = 15_000
 
 # Legacy: the old uniform-timestamp model used a fixed ride count. Kept only so the retired
-# ``sample_timestamps`` path and any pre-Rev-2 callers still import; unused by the driver sim.
+# ``sample_timestamps`` path and any older callers still import; unused by the driver sim.
 N_RIDES = 50_000
 
-# --- Ride tiers (SPEC §2.2) ------------------------------------------------
+# --- Ride tiers ------------------------------------------------------------
 # Plausible but invented EUR tariffs, listed in increasing-price order. Adjustable here.
 TIERS: tuple[RideTier, ...] = (
     RideTier("uberx", "UberX", 4, 1.20, 0.90, 0.18, 0.90, 5.00),
@@ -43,9 +43,9 @@ TIERS: tuple[RideTier, ...] = (
     RideTier("van", "Uber Van", 6, 4.50, 2.40, 0.50, 1.50, 14.00),
 )
 
-# --- Pricing dynamics (SPEC §2.4 / §2.5) -----------------------------------
+# --- Pricing dynamics ------------------------------------------------------
 # Average road speed (km/h) by hour of day (index 0..23): slow in the rush peaks, fast
-# overnight. Turns distance into duration. Flexible (SPEC §6); every entry is > 0 so any
+# overnight. Turns distance into duration. Flexible; every entry is > 0 so any
 # positive-distance ride has a positive duration.
 SPEED_KMH_BY_HOUR: tuple[float, ...] = (
     35.0,
@@ -74,7 +74,7 @@ SPEED_KMH_BY_HOUR: tuple[float, ...] = (
     32.0,  # 21–23 late evening easing
 )
 
-# Surge demand profile (SPEC §2.5): deterministic base multiplier per time bucket, applied
+# Surge demand profile: deterministic base multiplier per time bucket, applied
 # before the per-ride jitter. dow uses datetime.weekday(): 0=Mon .. 6=Sun.
 SURGE_CLAMP = (1.0, 3.0)  # (min, max) surge after jitter
 SURGE_OFFPEAK = 1.00  # weekday off-peak (10–12, 14–17 and other daytime)
@@ -84,13 +84,13 @@ SURGE_LATE_NIGHT = 1.10  # weekday 00–05
 SURGE_WEEKEND_DAY = 1.05  # Sat/Sun daytime (incl. Sunday daytime)
 SURGE_WEEKEND_NIGHT = 2.20  # Fri & Sat nights 21–03 (the expensive case)
 
-# Per-ride surge jitter (SPEC §2.5): multiplicative lognormal(0, sigma) noise, median 1.0,
+# Per-ride surge jitter: multiplicative lognormal(0, sigma) noise, median 1.0,
 # so two identical trips at the same hour still differ before the [1.0, 3.0] clamp.
 JITTER_SIGMA = 0.15
 
-# Additive Gaussian price noise (EUR std, SPEC §2.4). Calibrated (Task 3.4) so in-sample OLS
+# Additive Gaussian price noise (EUR std). Calibrated so in-sample OLS
 # on the pinned signal feature set (numeric + one-hot tier + one-hot pickup_district;
-# driver_id excluded) lands at R²≈0.85. Re-verified for Rev 2 (Task 3R.5): under the day-by-day
+# driver_id excluded) lands at R²≈0.85. Re-verified: under the day-by-day
 # driver simulation's *clustered* timestamps the value holds unchanged — SEED=42 gives R²≈0.851
 # (robust ≈0.848–0.852 across seeds at n_drivers=250 ≈107k rides; R² is ~invariant to N, so it
 # also characterizes the shipped 15k-driver run ≈6.4M rides). Even at NOISE_STD=0 OLS caps near
@@ -98,10 +98,10 @@ JITTER_SIGMA = 0.15
 # exactly, which is the point of Parts 5+.
 NOISE_STD = 3.75
 
-# Target OLS R² band on the pinned signal feature set (SPEC §5.6, Task 3.4).
+# Target OLS R² band on the pinned signal feature set.
 R2_BAND = (0.83, 0.87)
 
-# --- Data-leakage trap (SPEC §2.3 / §5.8, Task 4.2) ------------------------
+# --- Data-leakage trap -----------------------------------------------------
 # commission_eur = COMMISSION_RATE × price_eur + negligible Gaussian noise (Uber's cut). It is
 # derived from the target, so it is EXCLUDED from the price formula and the pinned OLS feature
 # set; feeding it in as an X feature pushes in-sample R² ≈ 1 — the concrete leakage example that
@@ -110,17 +110,17 @@ R2_BAND = (0.83, 0.87)
 COMMISSION_RATE = 0.25
 COMMISSION_NOISE_STD = 0.02
 
-# --- Driver population & day-by-day simulation (SPEC §2.6, Rev 2) -----------
+# --- Driver population & day-by-day simulation -----------------------------
 # Activity classes, right-skewed toward part-time (research: >50% of drivers work 1–5 h/week,
 # ~80% <20 h/week). Per class: expected working days per week, and mean rides on a worked day
-# (Poisson mean; ~2 trips/hour → part-time ≈ 6–12/day, full-time ≈ 20–25/day). Flexible (§6).
+# (Poisson mean; ~2 trips/hour → part-time ≈ 6–12/day, full-time ≈ 20–25/day). Flexible.
 ACTIVITY_CLASSES = ("casual", "part_time", "full_time")
 ACTIVITY_CLASS_WEIGHTS = (0.55, 0.30, 0.15)
 WORKDAYS_PER_WEEK = {"casual": 1.5, "part_time": 3.0, "full_time": 5.5}
 RIDES_PER_WORKDAY_MEAN = {"casual": 5.0, "part_time": 9.0, "full_time": 20.0}
 WEEKEND_WORK_BOOST = 1.20  # weekends are busier: scale the daily work probability (capped at 1)
 
-# Tenure / churn cohorts (§2.6): drivers split into ~3-month, ~6-month and full-year cohorts
+# Tenure / churn cohorts: drivers split into ~3-month, ~6-month and full-year cohorts
 # (Stanford/Uber: ~68% quit within 6 months, ~50% within a year). Per-driver uniform jitter of
 # ±TENURE_JITTER_DAYS is added to the cohort length. Start dates are staggered for a stationary
 # active fleet (see simulation.py).
@@ -189,8 +189,8 @@ WEEKEND_NIGHT_VOLUME_BOOST = 1.5  # extra ride volume in 21–03 on Fri(4) & Sat
 # Fraction of a driver's rides whose pickup is biased into their home district (rest uniform).
 HOME_DISTRICT_PICKUP_PROB = 0.40
 
-# Per-driver rating (a weak distractor, joined onto rides in Phase 4). Range calibrated to the
-# NCR ``Driver Ratings`` support; refined against NCR empirically in Task 4.1.
+# Per-driver rating (a weak distractor, joined onto rides). Range calibrated to the
+# NCR ``Driver Ratings`` support; refined against NCR empirically.
 DRIVER_RATING_MIN, DRIVER_RATING_MAX = 3.5, 5.0
 
 # --- Geography -------------------------------------------------------------

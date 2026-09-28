@@ -1,4 +1,4 @@
-"""Boundary tests for the infrastructure I/O layer (T1.2 split of the old ``uber.io``).
+"""Boundary tests for the infrastructure I/O layer (split out of the old ``uber.io``).
 
 Pins the public surface of the three adapter modules the monolithic ``io`` module was split
 into — ``csv_io`` (generic CSV mechanics), ``repositories`` (domain-table builders + column
@@ -70,4 +70,4 @@ def test_ncr_load_returns_nonempty_distractor_supports() -> None:
     assert set(supports) == set(config.NCR_DISTRACTOR_COLUMNS)
     for values in supports.values():
         assert len(values) > 0
-        assert not pd.isna(values).any()  # NaNs dropped independently (R3)
+        assert not pd.isna(values).any()  # NaNs dropped independently

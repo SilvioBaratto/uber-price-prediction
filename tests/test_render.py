@@ -1,4 +1,4 @@
-"""T2.6 — render_options: format a quote as an aligned terminal table (presentation layer).
+"""render_options: format a quote as an aligned terminal table (presentation layer).
 
 Pure string formatting: given the sorted RideOptions from a quote, produce a header line plus
 one aligned row per tier (tier name, price in EUR, ETA in minutes, seat capacity).

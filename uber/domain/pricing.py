@@ -1,7 +1,7 @@
 """Pure pricing + geography functions (no I/O).
 
-Implements the documented ground-truth price formula (SPEC §2.4) and the temporal demand
-profile (SPEC §2.5) — the "answer" the ML models must reconstruct. Every function is pure;
+Implements the documented ground-truth price formula and the temporal demand
+profile — the "answer" the ML models must reconstruct. Every function is pure;
 tunable constants live in ``uber.domain.config``. ``dow`` follows ``datetime.weekday()``:
 0=Mon .. 6=Sun.
 """
@@ -55,9 +55,9 @@ def duration_min_array(distance_km: np.ndarray, hour: np.ndarray) -> np.ndarray:
     return distance_km / _SPEED_ARR[hour] * 60.0
 
 
-# --- Temporal demand / surge (SPEC §2.5) -----------------------------------
+# --- Temporal demand / surge -----------------------------------
 def _is_weekend_night(hour: int, dow: int) -> bool:
-    """True inside the Fri & Sat night window (21:00–03:59), SPEC §2.5.
+    """True inside the Fri & Sat night window (21:00–03:59).
 
     A "Friday night" runs Fri 21:00 → Sat 03:59; a "Saturday night" runs Sat 21:00 →
     Sun 03:59. So the small hours of Sat and Sun still count as the previous evening's peak,
@@ -75,7 +75,7 @@ def _is_weekend_night(hour: int, dow: int) -> bool:
 
 
 def demand_profile(hour: int, dow: int) -> float:
-    """Deterministic base surge for a (hour, dow) bucket, before jitter (SPEC §2.5)."""
+    """Deterministic base surge for a (hour, dow) bucket, before jitter."""
     if _is_weekend_night(hour, dow):
         return config.SURGE_WEEKEND_NIGHT
     if dow in (5, 6):  # remaining Sat/Sun hours = weekend daytime
@@ -122,7 +122,7 @@ def surge_array(hour: np.ndarray, dow: np.ndarray, jitter: np.ndarray) -> np.nda
     return np.clip(base * jitter, lo, hi)
 
 
-# --- Price formula (SPEC §2.4) ---------------------------------------------
+# --- Price formula ---------------------------------------------
 def price(
     tier: RideTier,
     distance_km: float,
@@ -130,7 +130,7 @@ def price(
     surge_multiplier: float,
     noise: float = 0.0,
 ) -> float:
-    """Ground-truth ride price in EUR (SPEC §2.4)::
+    """Ground-truth ride price in EUR::
 
         ride_base = base_fare + per_km * distance_km + per_min * duration_min
         price_raw = ride_base * surge_multiplier + booking_fee

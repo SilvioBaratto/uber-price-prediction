@@ -1,4 +1,4 @@
-"""T2.3 — the QuoteService use case (application layer).
+"""The QuoteService use case (application layer).
 
 Given an origin, a destination and a time, QuoteService builds one feature row per tier, calls
 the injected PricePredictor exactly once, and returns a RideOption per tier sorted cheapest

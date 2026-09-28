@@ -1,8 +1,8 @@
 """Integrity, geographic consistency and reproducibility of the signal-only rides table.
 
-Rev 2 (Phase 3R): rides are the *emergent* output of the day-by-day driver simulation
-(SPEC §2.6). ``build_dataset`` returns ``(drivers, rides)``; ``rides`` carries the signal
-columns of SPEC §2.3 + ``price_eur`` plus the ``driver_id`` foreign key (metadata / weak
+Rides are the *emergent* output of the day-by-day driver simulation.
+``build_dataset`` returns ``(drivers, rides)``; ``rides`` carries the signal
+columns + ``price_eur`` plus the ``driver_id`` foreign key (metadata / weak
 distractor). Checks use a modest driver count that still yields > 50k rides.
 """
 
@@ -57,7 +57,7 @@ def test_rides_columns_and_order(rides: pd.DataFrame) -> None:
         "surge_multiplier",
         "price_eur",
     ]
-    # signal + target, then the weak distractors (Task 4.1), then the leakage column (Task 4.2)
+    # signal + target, then the weak distractors, then the leakage column
     assert generate_data.RIDE_COLUMNS == generate_data.SIGNAL_COLUMNS + [
         "payment_method",
         "driver_rating",
@@ -93,7 +93,7 @@ def test_rides_integrity(rides: pd.DataFrame) -> None:
 
 def test_rides_row_count_is_emergent_and_large(rides: pd.DataFrame) -> None:
     # Row count is driven by the driver simulation, not a fixed knob; even a few hundred
-    # drivers produce a big log (SPEC §2.6 sizing note: full 15k scale ⇒ millions).
+    # drivers produce a big log (full 15k scale ⇒ millions).
     assert len(rides) > 50_000
 
 

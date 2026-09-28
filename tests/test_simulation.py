@@ -1,4 +1,4 @@
-"""Tasks 3R.2 / 3R.3 — the day-by-day driver simulation (SPEC §2.6, Rev 2).
+"""The day-by-day driver simulation.
 
 Uses a modest ``N`` so the vectorized simulation stays fast; the shipped default is 15k
 drivers (millions of rides). ``build_drivers`` produces the roster + tenure/churn;
@@ -31,7 +31,7 @@ def drivers(locations: pd.DataFrame) -> pd.DataFrame:
     return simulation.build_drivers(sampling.make_rng(config.SEED), N, locations)
 
 
-# --- Task 3R.2: roster + tenure/churn -------------------------------------
+# --- roster + tenure/churn -------------------------------------
 def test_roster_shape_and_keys(drivers: pd.DataFrame) -> None:
     assert list(drivers.columns) == repositories.DRIVER_COLUMNS
     assert len(drivers) == N
@@ -92,7 +92,7 @@ def test_active_fleet_is_stationary(drivers: pd.DataFrame) -> None:
     assert active.max() < 1.25 * mean
 
 
-# --- Task 3R.3: per-day ride events ---------------------------------------
+# --- per-day ride events ---------------------------------------
 @pytest.fixture(scope="module")
 def sim(drivers: pd.DataFrame):
     events, active_days, n_rides = simulation.simulate_ride_events(

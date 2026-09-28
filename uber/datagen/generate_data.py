@@ -1,10 +1,9 @@
 """Orchestration + CLI entry point: ``python -m uber.datagen.generate_data``.
 
 Writes the dataset CSVs into ``data/raw/``: ``madrid_locations.csv``, ``ride_tiers.csv``,
-``drivers.csv`` and the signal-only ``rides.csv`` (distractors + ``commission_eur`` land in
-Phase 4). Rev 2: rides are the *emergent* output of a day-by-day driver simulation (SPEC
-§2.6) rather than a fixed count of uniform events — the sizing knob is ``--n-drivers``. All
-randomness flows through one seeded generator so runs are reproducible (SPEC §6).
+``drivers.csv`` and ``rides.csv``. Rides are the *emergent* output of a day-by-day driver
+simulation rather than a fixed count of uniform events — the sizing knob is ``--n-drivers``.
+All randomness flows through one seeded generator so runs are reproducible.
 """
 
 from __future__ import annotations
@@ -19,8 +18,8 @@ from uber.datagen import sampling, simulation
 from uber.domain import config, pricing
 from uber.infrastructure import csv_io, ncr, paths, repositories
 
-# Signal columns of SPEC §2.3 + the target ``price_eur`` (no distractors/commission yet).
-# ``driver_id`` is metadata / a weak distractor (SPEC §2.3): it is NOT part of the pinned OLS
+# Signal columns + the target ``price_eur`` (no distractors/commission).
+# ``driver_id`` is metadata / a weak distractor: it is NOT part of the pinned OLS
 # feature set and does not enter the price formula.
 SIGNAL_COLUMNS = [
     "ride_id",
@@ -39,17 +38,17 @@ SIGNAL_COLUMNS = [
     "price_eur",
 ]
 
-# Weak features / distractors (SPEC §2.3, Task 4.1): true coefficient 0, so each is ~uncorrelated
+# Weak features / distractors: true coefficient 0, so each is ~uncorrelated
 # with ``price_eur``. ``payment_method`` / ``customer_rating`` / ``avg_vtat`` are sampled from the
 # NCR empirical distributions; ``driver_rating`` is per-driver (drivers.csv) joined onto rides.
 DISTRACTOR_COLUMNS = ["payment_method", "driver_rating", "customer_rating", "avg_vtat"]
 
-# Data-leakage trap (SPEC §2.3, Task 4.2): derived from the target, so it is excluded from the
+# Data-leakage trap: derived from the target, so it is excluded from the
 # signal set — feeding it in as an X feature pushes R² ≈ 1 (the Part 8 leakage example).
 LEAKAGE_COLUMNS = ["commission_eur"]
 
 # Full rides.csv column order: signal + target, then the weak distractors, then the leakage
-# column. The pinned OLS feature set (SPEC §5.6) still draws only from ``SIGNAL_COLUMNS``.
+# column. The pinned OLS feature set still draws only from ``SIGNAL_COLUMNS``.
 RIDE_COLUMNS = SIGNAL_COLUMNS + DISTRACTOR_COLUMNS + LEAKAGE_COLUMNS
 
 
@@ -83,7 +82,7 @@ def build_rides_df(
     the driver's home district — tier, surge jitter and price noise are drawn from ``rng`` in a
     fixed order, then the per-ride physics reuse the canonical *array* functions in
     :mod:`uber.domain.pricing` (the documented ground truth) so the formula is never duplicated. The
-    weak distractors (SPEC §2.3) are added last: ``payment_method`` / ``customer_rating`` /
+    weak distractors are added last: ``payment_method`` / ``customer_rating`` /
     ``avg_vtat`` are sampled from the NCR empirical supports in ``ncr`` (drawn *after* the signal
     draws so the signal columns stay byte-identical), and per-driver ``driver_rating`` is joined
     on. Finally ``commission_eur`` (the leakage trap) is derived from ``price_eur``. Rides are

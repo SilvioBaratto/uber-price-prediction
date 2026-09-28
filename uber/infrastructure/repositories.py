@@ -33,7 +33,7 @@ TIER_COLUMNS = [
     "booking_fee",
     "min_fare",
 ]
-# drivers.csv schema (SPEC §2.1b, Rev 2). Matches ``entities.Driver`` field order; the table
+# drivers.csv schema. Matches ``entities.Driver`` field order; the table
 # itself is built by the seeded ``datagen.simulation.build_drivers`` (generative, so it lives
 # there, not here) — this adapter only owns the column contract and the write.
 DRIVER_COLUMNS = [

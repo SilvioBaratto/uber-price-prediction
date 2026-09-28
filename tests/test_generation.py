@@ -1,17 +1,17 @@
-"""Consolidated SPEC §5 validation suite (Task 5.1, Checkpoint 4).
+"""Consolidated validation suite for the generated dataset.
 
 This is the single end-to-end validation of the generated dataset. It builds the driver
 population + the emergent ride log **once** (a modest ``N_DRIVERS`` — R² and the structural
-properties are ~invariant to scale, SPEC §2.6) and asserts every SPEC §5 property against
-that one coherent dataset, plus byte-identical reproducibility (§5.1). The per-module unit
+properties are ~invariant to scale) and asserts every structural property against
+that one coherent dataset, plus byte-identical reproducibility. The per-module unit
 tests (``test_pricing``, ``test_sampling``, ``test_simulation`` …) remain the fine-grained
-checks; this file proves they hold *together*. There is one test per SPEC §5 assertion,
-numbered ``test_s5_<n>_...`` to match the spec.
+checks; this file proves they hold *together*. There is one test per validated property,
+numbered ``test_s5_<n>_...``.
 
-The OLS feature set is *pinned* (A3) so the R² band is stable across runs: numeric
+The OLS feature set is *pinned* so the R² band is stable across runs: numeric
 ``distance_km, duration_min, surge_multiplier, hour, day_of_week, month`` plus one-hot
 ``tier`` and one-hot ``pickup_district``. ``driver_id`` is deliberately excluded — it is
-metadata, not a price signal (SPEC §2.3).
+metadata, not a price signal.
 """
 
 from __future__ import annotations
@@ -61,7 +61,7 @@ def drivers(dataset: tuple[pd.DataFrame, pd.DataFrame]) -> pd.DataFrame:
 @pytest.fixture(scope="module")
 def roster(locations: pd.DataFrame) -> pd.DataFrame:
     # A larger population than the ride-level dataset: the active-fleet stationarity and cohort
-    # spread (§5.11) are only crisp at scale, and building the roster alone (no rides) is cheap.
+    # spread are only crisp at scale, and building the roster alone (no rides) is cheap.
     return simulation.build_drivers(sampling.make_rng(config.SEED), N_ROSTER, locations)
 
 
@@ -73,7 +73,7 @@ def _ols_r2(rides: pd.DataFrame, extra_numeric: list[str] = []) -> float:
     return LinearRegression().fit(X, y).score(X, y)
 
 
-# --- §5.1 Reproducibility: same seed => byte-identical output ---------------
+# --- Reproducibility: same seed => byte-identical output ---------------
 def test_s5_1_reproducible_byte_identical(tmp_path) -> None:
     a, b = tmp_path / "a", tmp_path / "b"
     generate_data.generate(a, seed=config.SEED, n_drivers=40)
@@ -82,7 +82,7 @@ def test_s5_1_reproducible_byte_identical(tmp_path) -> None:
         assert (a / name).read_bytes() == (b / name).read_bytes(), f"{name} not byte-identical"
 
 
-# --- §5.2 Integrity: columns, types, no nulls, emergent row count ----------
+# --- Integrity: columns, types, no nulls, emergent row count ----------
 def test_s5_2_integrity(rides: pd.DataFrame) -> None:
     assert list(rides.columns) == generate_data.RIDE_COLUMNS
     assert int(rides.isnull().sum().sum()) == 0
@@ -104,14 +104,14 @@ def test_s5_2_integrity(rides: pd.DataFrame) -> None:
         assert pd.api.types.is_object_dtype(rides[col]) or pd.api.types.is_string_dtype(rides[col])
 
 
-# --- §5.3 Price constraints: price > 0 and >= the tier's min_fare ----------
+# --- Price constraints: price > 0 and >= the tier's min_fare ----------
 def test_s5_3_price_constraints(rides: pd.DataFrame) -> None:
     assert (rides["price_eur"] > 0).all()
     min_fare = rides["tier"].map({t.tier: t.min_fare for t in config.TIERS})
     assert (rides["price_eur"] >= min_fare - 1e-9).all()
 
 
-# --- §5.4 Geographic consistency: distance == haversine×road-factor --------
+# --- Geographic consistency: distance == haversine×road-factor --------
 def test_s5_4_geographic_consistency(rides: pd.DataFrame, locations: pd.DataFrame) -> None:
     lats = locations["lat"].to_numpy()
     lons = locations["lon"].to_numpy()
@@ -123,9 +123,9 @@ def test_s5_4_geographic_consistency(rides: pd.DataFrame, locations: pd.DataFram
         assert row.duration_min == pytest.approx(pricing.duration_min(row.distance_km, row.hour))
 
 
-# --- §5.5 Tier ordering: equivalent trips priced uberx <= ... <= van -------
+# --- Tier ordering: equivalent trips priced uberx <= ... <= van -------
 def test_s5_5_tier_ordering(rides: pd.DataFrame) -> None:
-    order = [t.tier for t in config.TIERS]  # increasing-price order (SPEC §2.2)
+    order = [t.tier for t in config.TIERS]  # increasing-price order
     band = rides["distance_km"].between(5.0, 10.0)  # "equivalent" trips: one distance band
     means = rides.loc[band].groupby("tier")["price_eur"].mean().reindex(order)
     # Non-decreasing across the declared order. uberx/green share identical tariffs (a deliberate
@@ -137,14 +137,14 @@ def test_s5_5_tier_ordering(rides: pd.DataFrame) -> None:
     assert means["green"] < means["comfort"] < means["xl"] < means["black"] < means["van"]
 
 
-# --- §5.6 Signal band: OLS R² in the calibrated band -----------------------
+# --- Signal band: OLS R² in the calibrated band -----------------------
 def test_s5_6_signal_band(rides: pd.DataFrame) -> None:
     lo, hi = config.R2_BAND
     r2 = _ols_r2(rides)
     assert lo <= r2 <= hi, f"OLS R²={r2:.4f} outside band {config.R2_BAND}"
 
 
-# --- §5.7 Useless distractors: correlation ~0 with the target --------------
+# --- Useless distractors: correlation ~0 with the target --------------
 def test_s5_7_distractors_uncorrelated(rides: pd.DataFrame) -> None:
     price = rides["price_eur"].to_numpy(dtype=float)
     for col in ("driver_rating", "customer_rating", "avg_vtat"):
@@ -155,7 +155,7 @@ def test_s5_7_distractors_uncorrelated(rides: pd.DataFrame) -> None:
         assert abs(r) < 0.05, f"payment_method={cat} correlation with price_eur = {r:.4f}"
 
 
-# --- §5.8 Leakage trap: including commission_eur pushes R² ~ 1 -------------
+# --- Leakage trap: including commission_eur pushes R² ~ 1 -------------
 def test_s5_8_leakage_trap(rides: pd.DataFrame) -> None:
     assert "commission_eur" not in generate_data.SIGNAL_COLUMNS
     assert generate_data.LEAKAGE_COLUMNS == ["commission_eur"]
@@ -163,7 +163,7 @@ def test_s5_8_leakage_trap(rides: pd.DataFrame) -> None:
     assert r2 > 0.999, f"leakage R²={r2:.5f} did not approach 1"
 
 
-# --- §5.9 Time-of-call pricing: weekend nights materially pricier ----------
+# --- Time-of-call pricing: weekend nights materially pricier ----------
 def test_s5_9_time_of_call(rides: pd.DataFrame) -> None:
     hour, dow = rides["hour"], rides["day_of_week"]
     # Fri & Sat nights (21:00–03:59): Fri evening, Sat small hours + evening, Sun small hours.
@@ -181,7 +181,7 @@ def test_s5_9_time_of_call(rides: pd.DataFrame) -> None:
     )
 
 
-# --- §5.10 Driver panel structure: valid FK, repeat/right-skewed, no leak --
+# --- Driver panel structure: valid FK, repeat/right-skewed, no leak --
 def test_s5_10_driver_panel(rides: pd.DataFrame, drivers: pd.DataFrame) -> None:
     assert rides["driver_id"].between(1, len(drivers)).all()
     # every simulated driver gives at least one ride, so the id sets coincide exactly
@@ -197,7 +197,7 @@ def test_s5_10_driver_panel(rides: pd.DataFrame, drivers: pd.DataFrame) -> None:
     assert abs(r) < 0.05, f"driver_rating correlation with price_eur = {r:.4f}"
 
 
-# --- §5.11 Tenure / churn: churned cohort, cohort spread, stationary fleet -
+# --- Tenure / churn: churned cohort, cohort spread, stationary fleet -
 def test_s5_11_tenure_churn(roster: pd.DataFrame) -> None:
     start = roster["tenure_start"].to_numpy(dtype="datetime64[D]")
     end = roster["tenure_end"].to_numpy(dtype="datetime64[D]")
@@ -217,7 +217,7 @@ def test_s5_11_tenure_churn(roster: pd.DataFrame) -> None:
     assert active.min() > 0.75 * mean and active.max() < 1.25 * mean
 
 
-# --- §5.12 Year coverage: all months/weekdays, non-uniform hours -----------
+# --- Year coverage: all months/weekdays, non-uniform hours -----------
 def test_s5_12_year_coverage(rides: pd.DataFrame) -> None:
     assert set(rides["month"].unique()) == set(range(1, 13))
     assert set(rides["day_of_week"].unique()) == set(range(7))

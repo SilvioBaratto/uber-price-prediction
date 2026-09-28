@@ -1,10 +1,10 @@
-"""Signal-band calibration and time-of-call pricing (SPEC §5.6 / §5.9, Task 3.4).
+"""Signal-band calibration and time-of-call pricing.
 
-The OLS feature set is *pinned* here (A3) so the R² band is stable across runs: numeric
+The OLS feature set is *pinned* here so the R² band is stable across runs: numeric
 ``distance_km, duration_min, surge_multiplier, hour, day_of_week, month`` plus one-hot
 ``tier`` and one-hot ``pickup_district``. ``driver_id`` is deliberately excluded — it is
-metadata, not a price signal (SPEC §2.3). The R² band is ~invariant to dataset size, so the
-checks run on a reduced driver count rather than the shipped 15k (SPEC §2.6).
+metadata, not a price signal. The R² band is ~invariant to dataset size, so the
+checks run on a reduced driver count rather than the shipped 15k.
 """
 
 from __future__ import annotations

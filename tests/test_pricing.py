@@ -1,4 +1,4 @@
-"""Unit tests for the pure pricing + geography functions (SPEC §2.4 / §2.5).
+"""Unit tests for the pure pricing + geography functions.
 
 No I/O: these exercise ``uber.domain.pricing`` in isolation. dow uses datetime.weekday()
 convention (0=Mon .. 6=Sun).
@@ -100,7 +100,7 @@ def test_surge_default_jitter_equals_profile() -> None:
     assert pricing.surge(8, WED, jitter=1.0) == pytest.approx(pricing.demand_profile(8, WED))
 
 
-# --- price formula (SPEC §2.4) --------------------------------------------
+# --- price formula ---------------------------------------------------------
 def test_price_matches_formula() -> None:
     tier = config.TIERS[0]  # uberx
     distance, duration, surge_mult = 10.0, 20.0, 1.0

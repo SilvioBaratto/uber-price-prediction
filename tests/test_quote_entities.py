@@ -1,4 +1,4 @@
-"""T2.1 — the pure quote entities ``RideOption`` and ``TripRequest`` (domain layer).
+"""The pure quote entities ``RideOption`` and ``TripRequest`` (domain layer).
 
 These are I/O-free value objects the application layer produces (``RideOption``) and consumes
 (``TripRequest``). They must be frozen (hashable value objects), validate their invariants at

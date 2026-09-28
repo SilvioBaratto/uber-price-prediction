@@ -1,7 +1,7 @@
-"""Task 3R.1 — the ``Driver`` entity and driver-population config params (SPEC §2.6, Rev 2).
+"""The ``Driver`` entity and driver-population config params.
 
-Pure constants/shape checks (no random draws). The values themselves are tuned later in
-Task 3R.5; here we only guarantee the knobs exist and have coherent shapes.
+Pure constants/shape checks (no random draws). The values themselves are tuned later;
+here we only guarantee the knobs exist and have coherent shapes.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ def test_driver_is_frozen_slotted_dataclass() -> None:
 
 def test_n_drivers_default_is_full_madrid_scale() -> None:
     assert isinstance(config.N_DRIVERS, int)
-    assert config.N_DRIVERS == 15_000  # O1 = Option C (full operating scale)
+    assert config.N_DRIVERS == 15_000  # full operating scale
 
 
 def test_activity_class_params_are_coherent() -> None:
